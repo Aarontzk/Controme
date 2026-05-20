@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect frontend
+        id: fe
+        run: |
+          if [ -f frontend/package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Detect backend (node)
+        id: be_node
+        run: |
+          if [ -f backend/package.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Detect backend (python)
+        id: be_py
+        run: |
+          if [ -f backend/requirements.txt ] || [ -f backend/pyproject.toml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node
+        if: steps.fe.outputs.exists == 'true' || steps.be_node.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        if: steps.be_py.outputs.exists == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Frontend install + lint + test
+        if: steps.fe.outputs.exists == 'true'
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint --if-present
+          npm test --if-present -- --ci
+
+      - name: Backend (Node) install + lint + test
+        if: steps.be_node.outputs.exists == 'true'
+        working-directory: backend
+        run: |
+          npm ci
+          npm run lint --if-present
+          npm test --if-present -- --ci
+
+      - name: Backend (Python) install + lint + test
+        if: steps.be_py.outputs.exists == 'true'
+        working-directory: backend
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f pyproject.toml ]; then pip install -e .[dev] || pip install -e .; fi
+          if command -v ruff >/dev/null 2>&1; then ruff check .; fi
+          if command -v pytest >/dev/null 2>&1; then pytest; fi

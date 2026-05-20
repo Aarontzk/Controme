@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+*.egg-info/
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+.aws/credentials
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+logs/
+
+# Test coverage
+coverage/
+.nyc_output/
+htmlcov/
+.pytest_cache/
+
+# Terraform / CDK
+.terraform/
+*.tfstate
+*.tfstate.backup
+cdk.out/
+
+# Misc
+.turbo/
+.vercel/
+.serverless/
+tmp/
