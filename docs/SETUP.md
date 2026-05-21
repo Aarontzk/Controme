@@ -1,15 +1,11 @@
 # Setup
 
-_Detailed instructions populated after stack lock (24 May 2026)._
-
 ## Prerequisites
 
 - Git
-- Node.js 20+ (for frontend)
-- Python 3.11+ or Node.js 20+ (for backend — TBA)
-- Docker (optional, for local DB)
-- AWS CLI configured (if Jalur B/C)
-- Supabase CLI (if Jalur A)
+- Node.js 20+
+- Python 3.11+
+- PostgreSQL 16+ (or Supabase account)
 
 ## Clone
 
@@ -18,41 +14,50 @@ git clone https://github.com/AzkaTz/retas-siber-imut.git
 cd retas-siber-imut
 ```
 
-## Environment Variables
-
-Copy `.env.example` → `.env` in each of `frontend/` and `backend/` once those files exist.
-
-```bash
-# frontend/.env.example  — TBA
-# backend/.env.example   — TBA
-```
-
-## Frontend
+## Frontend (Azka)
 
 ```bash
 cd frontend
-# TBA after stack lock
+cp .env.example .env
+npm install
+npm run dev        # http://localhost:5173
+npm run lint
+npm test
 ```
 
-## Backend
+## Backend (Farel)
 
 ```bash
 cd backend
-# TBA after stack lock
+cp .env.example .env
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+uvicorn src.main:app --reload   # http://localhost:8000
+# docs: http://localhost:8000/api/docs
+pytest
 ```
 
 ## Database
 
 ```bash
-# TBA — migrations + seed
+# TBA after stack lock — migrations via Alembic
+# alembic upgrade head
 ```
 
-## Run Tests
+## Environment Variables
 
-```bash
-# TBA
+| Key | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SECRET_KEY` | JWT signing key — never commit the real value |
+| `ALLOWED_ORIGINS` | JSON array of allowed CORS origins |
+| `APP_ENV` | `development` / `staging` / `production` |
+
+## Branch Strategy
+
 ```
-
-## Deploy
-
-See [.github/workflows/](../.github/workflows/) and [ARCHITECTURE.md](ARCHITECTURE.md).
+main       → production
+develop    → staging
+feature/*  → open PR against develop
+```

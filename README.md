@@ -52,10 +52,10 @@ Tracking 8 components per CyberHack rubric:
 
 | Name | Role |
 |---|---|
-| Aludra | TBD |
-| Salsa | TBD |
-| Azka | Domain Expert + TBD |
-| Farel | TBD |
+| Aludra | UI/UX Designer |
+| Salsa | Concept & Market Researcher |
+| Azka | Project Manager + Frontend Engineer |
+| Farel | Backend Engineer |
 
 ## License
 
