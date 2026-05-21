@@ -1,6 +1,6 @@
 # Retas Siber Imut
 
-> CyberHack 2026 submission by Tim Apter (Aludra, Salsa, Azka, Farel).
+> CyberHack 2026 submission by Tim Retas Siber Imut (Aludra, Salsa, Azka, Farel).
 > Industry partner: PT Indo Aneka Atsiri (Sima Arome).
 
 **Status:** Scaffolding — problem statement releases 25 May 2026.
