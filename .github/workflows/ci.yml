@@ -57,7 +57,7 @@ jobs:
         run: |
           npm ci
           npm run lint --if-present
-          npm test --if-present -- --ci
+          npm test --if-present
 
       - name: Backend (Node) install + lint + test
         if: steps.be_node.outputs.exists == 'true'
