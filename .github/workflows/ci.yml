@@ -7,71 +7,36 @@ on:
     branches: [main, develop]
 
 jobs:
-  lint-and-test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Detect frontend
-        id: fe
-        run: |
-          if [ -f frontend/package.json ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Detect backend (node)
-        id: be_node
-        run: |
-          if [ -f backend/package.json ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Detect backend (python)
-        id: be_py
-        run: |
-          if [ -f backend/requirements.txt ] || [ -f backend/pyproject.toml ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Setup Node
-        if: steps.fe.outputs.exists == 'true' || steps.be_node.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
 
-      - name: Setup Python
-        if: steps.be_py.outputs.exists == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Frontend install + lint + test
-        if: steps.fe.outputs.exists == 'true'
-        working-directory: frontend
-        run: |
-          npm ci
-          npm run lint --if-present
-          npm test --if-present
+      - name: Lint
+        run: pnpm lint
 
-      - name: Backend (Node) install + lint + test
-        if: steps.be_node.outputs.exists == 'true'
-        working-directory: backend
-        run: |
-          npm ci
-          npm run lint --if-present
-          npm test --if-present -- --ci
+      - name: Build
+        run: pnpm build
+        env:
+          # Build-time placeholders so static generation never fails on missing
+          # public env vars. Real values are set in Amplify / .env.local.
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_BUILDPAD_DAAS_URL: https://placeholder.daas.local
 
-      - name: Backend (Python) install + lint + test
-        if: steps.be_py.outputs.exists == 'true'
-        working-directory: backend
-        run: |
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          if [ -f pyproject.toml ]; then pip install -e .[dev] || pip install -e .; fi
-          ruff check .
-          pytest
+      - name: Test
+        run: pnpm test --if-present

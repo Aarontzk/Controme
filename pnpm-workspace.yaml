@@ -1,0 +1,12 @@
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
+onlyBuiltDependencies:
+  - sharp
+  - unrs-resolver
+# Force a single @tiptap/core (+ pm) version. Buildpad's rich-text components use the
+# tiptap v3 StarterKit API (e.g. StarterKit.configure({ link: false })), so pin core/pm
+# to v3 and dedupe — mixed v2/v3 cores cause incompatible editor types.
+overrides:
+  '@tiptap/core': 3.23.6
+  '@tiptap/pm': 3.23.6

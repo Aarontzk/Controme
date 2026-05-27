@@ -1,5 +1,11 @@
 # Setup
 
+> ⚠️ **Stack changed.** The project moved to the **Buildpad RAD platform**
+> (Next.js 16 + Mantine v8 + DaaS + Supabase) — the app now lives at the repo root and the
+> old FastAPI `backend/` + Vite `frontend/` were removed. For current setup use the README
+> **Quick Start** (`pnpm install && pnpm dev`). The Python/Vite instructions below are
+> retained for historical reference and are pending a rewrite.
+
 ## Prerequisites
 
 - Git

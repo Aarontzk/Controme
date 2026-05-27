@@ -2,6 +2,12 @@
 
 _Finalized after stack lock (24 May 2026, 18:00 WIB)._
 
+> ⚠️ **Stack decided: Buildpad RAD platform.** Frontend = **Next.js 16 + Mantine v8 +
+> Buildpad UI** (at repo root); backend = **Buildpad DaaS** (REST); database = **Supabase
+> Postgres + RLS**. Two-tier: `Next.js → DaaS → Supabase` (frontend never calls Supabase
+> directly; all calls go through Next.js API proxy routes). The `TBA`/Vite-vs-Next rows
+> below are superseded — see `AGENTS.md` §1 for the authoritative stack.
+
 ## System Diagram
 
 ```
