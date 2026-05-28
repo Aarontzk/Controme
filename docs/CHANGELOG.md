@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-28 - App shell RBAC
+
+- Added the F1 authenticated app shell with Buildpad `ContentLayout` /
+  `ContentNavigation`, role-scoped frontend navigation for QC Operator, PPIC,
+  Manager, and Admin, and placeholder routes for F2-F5 dashboards/admin work.
+
 ## 2026-05-28 — Vision QC to production
 
 - Completed Phase 1 DaaS backend: `products`, `qc_lots` (immutable), and

@@ -64,7 +64,8 @@ App = **Controme** (CV colour QC for Sima Arome). Domain locked from the PRD. Da
 
 - [x] Auth-gated QC capture at `/qc/capture` (Buildpad-first; products fetched from DaaS)
 - [x] Immutable lot history at `/qc/lots` via `CollectionList`
-- [ ] Product management UI (CollectionForm) + navigation/shell — pending
+- [x] App shell + role-scoped navigation for `qc_operator`, `ppic`, `manager`, and `admin`
+- [ ] Product management UI (CollectionForm) — pending
 
 ## Phase 3 — Business Logic 🟡
 
