@@ -6,14 +6,18 @@
 
 import type { ProductReference } from "./qc";
 
-/** Spray-Dried Ginger Powder — warm yellow-brown; darkening = over-heated, fading = stale. */
+/** Spray-Dried Ginger Powder — warm beige-brown; darkening = over-heated, fading = stale. */
 export const GINGER_POWDER: ProductReference = {
   id: "ginger-spray-dried",
   name: "Spray-Dried Ginger Powder",
-  reference: { L: 68.5, a: 7.2, b: 32.4 },
+  reference: {
+    L: 69.51783137071644,
+    a: 9.34119933738592,
+    b: 37.396043799462376,
+  },
   tolerance: { L: 4.0, a: 2.0, b: 3.5 },
   deltaEMax: 5.0,
-  rgbApprox: { r: 212, g: 164, b: 67 },
+  rgbApprox: { r: 207, g: 162, b: 102 },
 };
 
 /** Dragon Fruit Powder — bright red-pink (betacyanin); oxidation shifts it dramatically. */

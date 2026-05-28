@@ -6,9 +6,9 @@ Single source of truth for progress. Complete each phase before the next.
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Foundation | ✅ Complete |
-| 1 | Data Foundation | 🟡 In progress |
-| 2 | Core UI | ⬜ Not started |
-| 3 | Business Logic | ⬜ Not started |
+| 1 | Data Foundation | ✅ Complete |
+| 2 | Core UI | 🟡 In progress |
+| 3 | Business Logic | 🟡 In progress |
 | 4 | Relations | ⬜ Not started |
 | 5 | Polish | ⬜ Not started |
 
@@ -49,17 +49,28 @@ App = **Controme** (CV colour QC for Sima Arome). Domain locked from the PRD. Da
 - [x] Vitest set up + **9 unit tests** for ΔE/evaluation (`qc.test.ts`) — `pnpm test` green
 - [x] **Gate (logic):** `pnpm test`, `pnpm lint`, `pnpm build` all green
 
-**Blocked on `daas` MCP (needs Claude/Codex restart with project `.mcp.json` loaded) —
-backend / Farel via `/create-collection`, `/create-rbac`:**
-- [ ] Create `products` + `qc_lots` + `product_reference_versions` DaaS collections
-- [ ] Define 4 RBAC roles (admin / qc_operator / ppic / manager) + policies (`/create-rbac`)
-- [ ] Seed 2 demo products + ≥2 pass/1 reject lots each (PRD §4.3)
-- [ ] DaaS CORS (carried from Phase 0)
-- [ ] **Gate:** collection APIs reachable via `/api/items/*` and permission-gated
-
-> Division: Claude built the shared logic + schema spec + tests; the DaaS collection/seed/
-> RBAC creation is the MCP-side step (Codex/Farel, who run with the `daas` MCP).
+**Backend (done 2026-05-28 via `daas` MCP):**
+- [x] Created `products` + `qc_lots` (immutable) + `product_reference_versions` collections
+      with indexes (`qc_lots.product_id|status|checked_at`) and relations
+- [x] RBAC roles `qc_operator` / `ppic` / `manager` + per-collection policies (admin = default
+      Administrator); qc_lots is create+read only for operators
+- [x] Seeded 2 demo products + 6 lots (2 pass / 1 reject each, PRD §4.3)
+- [x] DaaS CORS set to explicit credentialed origins (localhost + Amplify)
+- [x] **Gate:** collections reachable via `/api/items/*` and permission-gated
 
 ---
 
-## Phases 2–5 — see copilot-instructions.md / create-project for deliverables
+## Phase 2 — Core UI 🟡
+
+- [x] Auth-gated QC capture at `/qc/capture` (Buildpad-first; products fetched from DaaS)
+- [x] Immutable lot history at `/qc/lots` via `CollectionList`
+- [ ] Product management UI (CollectionForm) + navigation/shell — pending
+
+## Phase 3 — Business Logic 🟡
+
+- [x] Server-authoritative QC: `/api/qc/lots` recomputes ΔE + contamination + consistency from
+      the photo (sharp, EXIF, white balance) — client preview is advisory only
+- [x] Immutable lot persistence + photo upload to DaaS Files; built-in `daas_activity` audit
+- [ ] Reference versioning workflow (`product_reference_versions`) + PPIC/manager dashboards
+
+## Phases 4–5 — see copilot-instructions.md / create-project for deliverables

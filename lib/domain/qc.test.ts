@@ -27,17 +27,27 @@ describe("evaluateSample", () => {
   });
 
   it("passes a small in-tolerance deviation", () => {
-    const result = evaluateSample(GINGER_POWDER, { L: 70, a: 8, b: 33 });
+    const result = evaluateSample(GINGER_POWDER, { L: 70, a: 10, b: 38 });
     expect(result.status).toBe("pass");
     expect(result.deltaE).toBeLessThanOrEqual(GINGER_POWDER.deltaEMax);
     expect(result.channelFlags).toHaveLength(0);
   });
 
   it("rejects an over-heated (too dark) ginger lot and flags L low", () => {
-    const result = evaluateSample(GINGER_POWDER, { L: 60, a: 7.2, b: 32.4 });
-    expect(result.status).toBe("reject"); // ΔE 8.5 > 5.0
+    const result = evaluateSample(GINGER_POWDER, {
+      L: 60,
+      a: GINGER_POWDER.reference.a,
+      b: GINGER_POWDER.reference.b,
+    });
+    expect(result.status).toBe("reject");
     expect(result.channelFlags).toEqual([
-      { channel: "L", value: 60, reference: 68.5, tolerance: 4.0, direction: "low" },
+      {
+        channel: "L",
+        value: 60,
+        reference: GINGER_POWDER.reference.L,
+        tolerance: 4.0,
+        direction: "low",
+      },
     ]);
   });
 
@@ -51,7 +61,11 @@ describe("evaluateSample", () => {
 
   it("can flag a channel while still passing on ΔE (borderline)", () => {
     // a* just outside ±2.0 tolerance, but overall ΔE stays under 5.0 → pass + flag.
-    const result = evaluateSample(GINGER_POWDER, { L: 68.5, a: 9.5, b: 32.4 });
+    const result = evaluateSample(GINGER_POWDER, {
+      L: GINGER_POWDER.reference.L,
+      a: GINGER_POWDER.reference.a + 2.3,
+      b: GINGER_POWDER.reference.b,
+    });
     expect(result.status).toBe("pass");
     expect(result.channelFlags.map((f) => f.channel)).toEqual(["a"]);
   });
@@ -59,7 +73,11 @@ describe("evaluateSample", () => {
 
 describe("buildQCLot", () => {
   it("copies ΔE and status from the evaluation so they cannot drift", () => {
-    const measured = { L: 60, a: 7.2, b: 32.4 };
+    const measured = {
+      L: 60,
+      a: GINGER_POWDER.reference.a,
+      b: GINGER_POWDER.reference.b,
+    };
     const evaluation = evaluateSample(GINGER_POWDER, measured);
     const lot = buildQCLot({
       lotId: "LOT-001",

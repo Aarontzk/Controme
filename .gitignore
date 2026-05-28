@@ -65,3 +65,9 @@ tmp/
 .kiro/settings/mcp.json
 .vscode/mcp.json
 .gemini/antigravity/mcp_config.json
+
+# Generated tooling / test artifacts
+/test-results/
+/playwright-report/
+/graphify-out/
+/.graphify_python/
