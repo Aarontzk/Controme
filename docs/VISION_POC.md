@@ -11,11 +11,15 @@ records.
 - Samples the center 50% x 50% ROI with `getImageData`.
 - Filters obvious tray/background pixels out of the measurement.
 - Flags dark foreign-object pixels as a contamination lane.
+- Checks powder texture consistency with brightness variance over powder pixels.
 - Reports basic lighting warnings from the accepted powder pixels.
+- Allows temporary session calibration from a known-good sample under the same
+  lighting setup.
 - Converts averaged sRGB to CIE L*a*b* with `chroma-js`.
 - Delegates colour Delta E and pass/reject verdicts to
   `lib/domain/evaluateSample`.
-- Produces a final reject if either the colour lane or contamination lane fails.
+- Produces a final reject if the colour, contamination, or consistency lane
+  fails.
 
 This is still a rule-based PoC. It does not train a classifier and does not claim
 full production-grade visual inspection.
@@ -43,8 +47,9 @@ This is intentional for Day 1 because the goal is to prove the browser pipeline:
 3. center ROI pixel extraction,
 4. sRGB to Lab conversion,
 5. powder-only masking and contamination counting,
-6. domain-owned Delta E evaluation,
-7. pass/reject rendering.
+6. texture/consistency variance checks,
+7. domain-owned Delta E evaluation,
+8. pass/reject rendering.
 
 Real photos are still useful for manual demos, but they are not stable enough for
 automated tests because lighting, shadows, camera white balance, compression, and
@@ -66,6 +71,15 @@ and must reject.
 reference but adds dark foreign objects near the center ROI. This fixture proves
 that the final status can reject from the contamination lane even when colour QC
 passes.
+
+`e2e/fixtures/ginger-clumpy.svg` keeps the product broadly ginger-coloured but
+mixes darker and lighter powder patches in the center ROI. This fixture proves
+that uneven texture or clumping can reject through the consistency lane.
+
+`e2e/fixtures/ginger-near-reference.svg` represents a generated or camera sample
+that is close to ginger but shifted by lighting. It first rejects against the
+stored Lab reference, then passes after the operator uses it as a temporary
+session reference for the current capture setup.
 
 The fixtures are SVG instead of photos so the expected center ROI color remains
 deterministic across browser runs. They validate the same browser APIs as user
@@ -105,7 +119,13 @@ The PoC now contains minimal Day 2 robustness:
   likely tray or background.
 - **Contamination lane:** counts very dark, low-spread pixels as foreign-object
   candidates and rejects when the contaminant ratio exceeds the threshold.
+- **Consistency lane:** computes brightness standard deviation across powder
+  pixels and rejects when the powder texture is too uneven.
 - **Lighting guard:** reports under-lit or over-lit powder averages as warnings.
+- **Session calibration:** lets the operator set the current measured Lab as a
+  temporary browser-only reference for the selected product. This is useful for
+  demos and lighting setup checks, but it is not persisted and does not replace
+  product master data.
 
 These rules make the demo more realistic, but they are intentionally simple and
 auditable. They should be replaced or augmented by calibrated capture hardware,
@@ -121,6 +141,8 @@ show the rule-based approach is insufficient.
 - The Day 1 demo does not persist images, lots, or QC records to DaaS.
 - Contamination detection is a classical CV heuristic, not a trained object
   detector.
+- Texture detection is a simple variance heuristic, not particle-size analysis
+  or a trained consistency model.
 
 ## Justification Summary
 

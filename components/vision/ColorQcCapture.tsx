@@ -75,6 +75,9 @@ export function ColorQcCapture({
   const [measuredLab, setMeasuredLab] = useState<LabColor | null>(null);
   const [sampleAnalysis, setSampleAnalysis] =
     useState<SamplePixelAnalysis | null>(null);
+  const [sessionReference, setSessionReference] = useState<LabColor | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -90,9 +93,20 @@ export function ColorQcCapture({
     [products]
   );
 
+  const activeProduct = useMemo(
+    () =>
+      sessionReference
+        ? {
+            ...product,
+            reference: sessionReference,
+          }
+        : product,
+    [product, sessionReference]
+  );
+
   const evaluation = useMemo(
-    () => (measuredLab ? evaluateSample(product, measuredLab) : null),
-    [measuredLab, product]
+    () => (measuredLab ? evaluateSample(activeProduct, measuredLab) : null),
+    [activeProduct, measuredLab]
   );
 
   const finalStatus = useMemo(() => {
@@ -102,7 +116,8 @@ export function ColorQcCapture({
 
     if (
       evaluation.status === "reject" ||
-      sampleAnalysis.contamination.status === "reject"
+      sampleAnalysis.contamination.status === "reject" ||
+      sampleAnalysis.consistency.status === "reject"
     ) {
       return "reject";
     }
@@ -192,7 +207,7 @@ export function ColorQcCapture({
           <Box>
             <Title order={3}>Color {"\u0394E"} QC Capture</Title>
             <Text c="dimmed" size="sm">
-              Center ROI average color against the selected product reference.
+              Center ROI color, texture, and contamination checks.
             </Text>
           </Box>
           {finalStatus ? (
@@ -214,6 +229,7 @@ export function ColorQcCapture({
             onChange={(value) => {
               if (value) {
                 setSelectedProductId(value);
+                setSessionReference(null);
               }
             }}
             allowDeselect={false}
@@ -269,6 +285,11 @@ export function ColorQcCapture({
                     data-testid="reference-swatch"
                   />
                   <Text size="sm">{product.name}</Text>
+                  {sessionReference ? (
+                    <Badge color="blue" variant="light">
+                      session calibrated
+                    </Badge>
+                  ) : null}
                 </Group>
                 <Group>
                   <ColorSwatch
@@ -309,6 +330,25 @@ export function ColorQcCapture({
                     <Text size="sm" c="dimmed">
                       {formatLab(measuredLab)}
                     </Text>
+                    <Group gap="xs">
+                      <Button
+                        size="xs"
+                        variant="light"
+                        onClick={() => setSessionReference(measuredLab)}
+                      >
+                        Use as session reference
+                      </Button>
+                      {sessionReference ? (
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          color="gray"
+                          onClick={() => setSessionReference(null)}
+                        >
+                          Reset reference
+                        </Button>
+                      ) : null}
+                    </Group>
                     {evaluation.channelFlags.length > 0 ? (
                       <List size="sm" spacing={4}>
                         {evaluation.channelFlags.map((flag) => (
@@ -364,6 +404,23 @@ export function ColorQcCapture({
                     <Text size="sm">
                       Background/tray pixels excluded:{" "}
                       {sampleAnalysis.metrics.backgroundPixels}
+                    </Text>
+                    <Group gap="xs">
+                      <Text size="sm">Consistency lane</Text>
+                      <Badge
+                        color={
+                          sampleAnalysis.consistency.status === "pass"
+                            ? "green"
+                            : "red"
+                        }
+                        data-testid="consistency-status"
+                      >
+                        {sampleAnalysis.consistency.status}
+                      </Badge>
+                    </Group>
+                    <Text size="sm" data-testid="texture-stddev">
+                      Texture brightness std dev:{" "}
+                      {sampleAnalysis.metrics.brightnessStdDev.toFixed(2)}
                     </Text>
                     {sampleAnalysis.metrics.lightingWarnings.length > 0 ? (
                       <List size="sm" spacing={4}>

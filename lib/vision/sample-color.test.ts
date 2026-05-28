@@ -79,6 +79,7 @@ describe("analyzeSamplePixels", () => {
     const result = analyzeSamplePixels(pixels, {
       minPowderPixels: 1,
       contaminationRatioMax: 0.2,
+      minContaminantPixels: 1,
     });
 
     expect(result.rgb).toEqual({ r: 200, g: 160, b: 110 });
@@ -95,5 +96,36 @@ describe("analyzeSamplePixels", () => {
     expect(() => analyzeSamplePixels(pixels, { minPowderPixels: 1 })).toThrow(
       "No powder pixels"
     );
+  });
+
+  it("passes consistency for uniform powder pixels", () => {
+    const pixels = new Uint8ClampedArray([
+      199, 161, 109, 255,
+      201, 159, 111, 255,
+      200, 160, 110, 255,
+      198, 162, 108, 255,
+    ]);
+
+    const result = analyzeSamplePixels(pixels, { minPowderPixels: 1 });
+
+    expect(result.consistency.status).toBe("pass");
+    expect(result.metrics.brightnessStdDev).toBeLessThan(2);
+  });
+
+  it("rejects uneven texture when powder brightness varies too much", () => {
+    const pixels = new Uint8ClampedArray([
+      199, 161, 109, 255,
+      140, 112, 72, 255,
+      225, 185, 125, 255,
+      198, 162, 108, 255,
+    ]);
+
+    const result = analyzeSamplePixels(pixels, {
+      minPowderPixels: 1,
+      textureStdDevMax: 18,
+    });
+
+    expect(result.consistency.status).toBe("reject");
+    expect(result.metrics.brightnessStdDev).toBeGreaterThan(18);
   });
 });

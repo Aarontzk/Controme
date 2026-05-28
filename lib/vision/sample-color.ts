@@ -11,6 +11,8 @@ export type LaneStatus = "pass" | "reject";
 export interface SampleAnalysisOptions extends AverageRgbOptions {
   minPowderPixels?: number;
   contaminationRatioMax?: number;
+  minContaminantPixels?: number;
+  textureStdDevMax?: number;
 }
 
 export interface SampleQualityMetrics {
@@ -20,6 +22,7 @@ export interface SampleQualityMetrics {
   contaminantPixels: number;
   contaminantRatio: number;
   averageBrightness: number;
+  brightnessStdDev: number;
   lightingWarnings: string[];
 }
 
@@ -29,10 +32,16 @@ export interface ContaminationEvaluation {
   contaminantRatio: number;
 }
 
+export interface ConsistencyEvaluation {
+  status: LaneStatus;
+  brightnessStdDev: number;
+}
+
 export interface SamplePixelAnalysis {
   rgb: RgbColor;
   metrics: SampleQualityMetrics;
   contamination: ContaminationEvaluation;
+  consistency: ConsistencyEvaluation;
 }
 
 export function averageRgb(
@@ -101,11 +110,14 @@ export function analyzeSamplePixels(
 ): SamplePixelAnalysis {
   const alphaThreshold = opts.skipAlphaBelow ?? 16;
   const minPowderPixels = opts.minPowderPixels ?? 32;
-  const contaminationRatioMax = opts.contaminationRatioMax ?? 0.01;
+  const contaminationRatioMax = opts.contaminationRatioMax ?? 0.025;
+  const minContaminantPixels = opts.minContaminantPixels ?? 16;
+  const textureStdDevMax = opts.textureStdDevMax ?? 26;
   let redTotal = 0;
   let greenTotal = 0;
   let blueTotal = 0;
   let brightnessTotal = 0;
+  let brightnessSquaredTotal = 0;
   let totalOpaquePixels = 0;
   let powderPixels = 0;
   let backgroundPixels = 0;
@@ -135,7 +147,9 @@ export function analyzeSamplePixels(
     redTotal += r;
     greenTotal += g;
     blueTotal += b;
-    brightnessTotal += getBrightness(r, g, b);
+    const brightness = getBrightness(r, g, b);
+    brightnessTotal += brightness;
+    brightnessSquaredTotal += brightness * brightness;
     powderPixels += 1;
   }
 
@@ -144,8 +158,17 @@ export function analyzeSamplePixels(
   }
 
   const averageBrightness = brightnessTotal / powderPixels;
+  const brightnessVariance = Math.max(
+    0,
+    brightnessSquaredTotal / powderPixels - averageBrightness * averageBrightness
+  );
+  const brightnessStdDev = Math.sqrt(brightnessVariance);
   const contaminantRatio =
     totalOpaquePixels === 0 ? 0 : contaminantPixels / totalOpaquePixels;
+  const contaminationReject =
+    contaminantPixels >= minContaminantPixels &&
+    contaminantRatio > contaminationRatioMax;
+  const consistencyReject = brightnessStdDev > textureStdDevMax;
 
   return {
     rgb: {
@@ -160,12 +183,17 @@ export function analyzeSamplePixels(
       contaminantPixels,
       contaminantRatio,
       averageBrightness,
+      brightnessStdDev,
       lightingWarnings: getLightingWarnings(averageBrightness),
     },
     contamination: {
-      status: contaminantRatio > contaminationRatioMax ? "reject" : "pass",
+      status: contaminationReject ? "reject" : "pass",
       contaminantPixels,
       contaminantRatio,
+    },
+    consistency: {
+      status: consistencyReject ? "reject" : "pass",
+      brightnessStdDev,
     },
   };
 }

@@ -6,3 +6,5 @@
   deterministic fixtures, manual generated-image prompts, and Day 1 limitations.
 - Expanded the Vision PoC with powder-only masking, rule-based contamination
   detection, and lighting warnings for more realistic photo checks.
+- Added a rule-based texture/consistency lane plus browser-only session
+  calibration for generated or camera samples under shifted lighting.
