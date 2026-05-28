@@ -1,4 +1,5 @@
 import { Container, Stack, Text, Title } from "@mantine/core";
+import { PpicDashboard } from "@/components/dashboard/QcDashboards";
 
 export default function PpicDashboardPage() {
   return (
@@ -6,9 +7,9 @@ export default function PpicDashboardPage() {
       <Stack gap="sm">
         <Title order={1}>PPIC Dashboard</Title>
         <Text c="dimmed">
-          Clearance lot real-time untuk pending QC, QC-cleared, dan rejected
-          akan diisi pada F4.
+          Clearance lot real-time untuk pending QC, QC-cleared, dan rejected.
         </Text>
+        <PpicDashboard />
       </Stack>
     </Container>
   );

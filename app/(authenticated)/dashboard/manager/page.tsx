@@ -1,4 +1,5 @@
 import { Container, Stack, Text, Title } from "@mantine/core";
+import { ManagerDashboard } from "@/components/dashboard/QcDashboards";
 
 export default function ManagerDashboardPage() {
   return (
@@ -6,9 +7,9 @@ export default function ManagerDashboardPage() {
       <Stack gap="sm">
         <Title order={1}>Manager Dashboard</Title>
         <Text c="dimmed">
-          Pass rate, trend Delta E, lot REJECT, dan warning band akan diisi
-          pada F4.
+          Pass rate, trend Delta E, lot REJECT, dan warning band.
         </Text>
+        <ManagerDashboard />
       </Stack>
     </Container>
   );
