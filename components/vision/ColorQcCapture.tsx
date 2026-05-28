@@ -174,7 +174,9 @@ export function ColorQcCapture({
           roi.width,
           roi.height
         );
-        const analysis = analyzeSamplePixels(imageData.data);
+        const analysis = analyzeSamplePixels(imageData.data, {
+          width: roi.width,
+        });
         const lab = rgbToLab(analysis.rgb);
         setMeasuredRgb(analysis.rgb);
         setMeasuredLab(lab);
@@ -421,6 +423,10 @@ export function ColorQcCapture({
                     <Text size="sm" data-testid="texture-stddev">
                       Texture brightness std dev:{" "}
                       {sampleAnalysis.metrics.brightnessStdDev.toFixed(2)}
+                    </Text>
+                    <Text size="sm" data-testid="texture-contrast">
+                      Texture local contrast:{" "}
+                      {sampleAnalysis.metrics.textureContrast.toFixed(2)}
                     </Text>
                     {sampleAnalysis.metrics.lightingWarnings.length > 0 ? (
                       <List size="sm" spacing={4}>

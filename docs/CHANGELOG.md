@@ -8,3 +8,6 @@
   detection, and lighting warnings for more realistic photo checks.
 - Added a rule-based texture/consistency lane plus browser-only session
   calibration for generated or camera samples under shifted lighting.
+- Calibrated the ginger demo seed reference against generated tray-photo
+  samples and added PNG Playwright fixtures for smooth, bright, blue, and rough
+  powder inputs.

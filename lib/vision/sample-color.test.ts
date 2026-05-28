@@ -45,7 +45,7 @@ describe("rgbToLab", () => {
   });
 
   it("feeds the domain QC evaluator without changing the pass/reject contract", () => {
-    const lab = rgbToLab({ r: 199, g: 161, b: 109 });
+    const lab = rgbToLab({ r: 207, g: 162, b: 102 });
     const result = evaluateSample(GINGER_POWDER, lab);
 
     expect(result.status).toBe("pass");
@@ -110,6 +110,7 @@ describe("analyzeSamplePixels", () => {
 
     expect(result.consistency.status).toBe("pass");
     expect(result.metrics.brightnessStdDev).toBeLessThan(2);
+    expect(result.metrics.textureContrast).toBe(0);
   });
 
   it("rejects uneven texture when powder brightness varies too much", () => {
@@ -127,5 +128,24 @@ describe("analyzeSamplePixels", () => {
 
     expect(result.consistency.status).toBe("reject");
     expect(result.metrics.brightnessStdDev).toBeGreaterThan(18);
+  });
+
+  it("rejects rough texture when adjacent powder contrast is too high", () => {
+    const pixels = new Uint8ClampedArray([
+      207, 162, 102, 255,
+      245, 198, 130, 255,
+      132, 108, 82, 255,
+      207, 162, 102, 255,
+    ]);
+
+    const result = analyzeSamplePixels(pixels, {
+      minPowderPixels: 1,
+      textureStdDevMax: 100,
+      textureContrastMax: 12,
+      width: 2,
+    });
+
+    expect(result.consistency.status).toBe("reject");
+    expect(result.metrics.textureContrast).toBeGreaterThan(12);
   });
 });

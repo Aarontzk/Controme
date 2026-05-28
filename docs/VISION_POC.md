@@ -11,7 +11,8 @@ records.
 - Samples the center 50% x 50% ROI with `getImageData`.
 - Filters obvious tray/background pixels out of the measurement.
 - Flags dark foreign-object pixels as a contamination lane.
-- Checks powder texture consistency with brightness variance over powder pixels.
+- Checks powder texture consistency with brightness variance and local contrast
+  over powder pixels.
 - Reports basic lighting warnings from the accepted powder pixels.
 - Allows temporary session calibration from a known-good sample under the same
   lighting setup.
@@ -27,7 +28,8 @@ full production-grade visual inspection.
 ## Verification
 
 Unit tests cover the pure color helpers in `lib/vision/sample-color.ts`.
-Playwright covers the browser canvas/upload path with deterministic SVG fixtures:
+Playwright covers the browser canvas/upload path with deterministic SVG fixtures
+and downscaled PNG fixtures from generated tray photos:
 
 ```bash
 pnpm test
@@ -51,16 +53,15 @@ This is intentional for Day 1 because the goal is to prove the browser pipeline:
 7. domain-owned Delta E evaluation,
 8. pass/reject rendering.
 
-Real photos are still useful for manual demos, but they are not stable enough for
-automated tests because lighting, shadows, camera white balance, compression, and
-background spill can change the center ROI average. Synthetic solid-color images
-keep the test focused on the software pipeline rather than the photography setup.
+The SVG fixtures keep the color/math expectations deterministic. The PNG
+fixtures prove that the same browser path can handle photo-style tray inputs
+with realistic texture, shadows, and compression.
 
 ## Fixture Strategy
 
 `e2e/fixtures/ginger-pass.svg` is a solid color near the Lab reference for
 `GINGER_POWDER`, converted back to sRGB with `chroma-js`. The color is
-`rgb(199, 161, 109)`, which produces a measured Lab value close enough to the
+`rgb(207, 162, 102)`, which produces a measured Lab value close enough to the
 domain reference to pass.
 
 `e2e/fixtures/blue-reject.svg` is intentionally off-color at
@@ -81,10 +82,17 @@ that is close to ginger but shifted by lighting. It first rejects against the
 stored Lab reference, then passes after the operator uses it as a temporary
 session reference for the current capture setup.
 
-The fixtures are SVG instead of photos so the expected center ROI color remains
-deterministic across browser runs. They validate the same browser APIs as user
-photos because Playwright uploads them through the same file input and the
-component reads them through the same `<img>` and `<canvas>` path.
+The photo-style fixtures cover four generated tray inputs:
+
+- `ginger-photo-smooth-pass.png`: smooth ginger powder, expected pass.
+- `ginger-photo-bright-pass.png`: brighter ginger powder, expected pass.
+- `ginger-photo-blue-reject.png`: blue-gray powder, expected colour reject.
+- `ginger-photo-rough-texture-reject.png`: ginger-coloured but rough powder,
+  expected consistency reject.
+
+All fixtures validate the same browser APIs as user photos because Playwright
+uploads them through the same file input and the component reads them through
+the same `<img>` and `<canvas>` path.
 
 ## Manual Demo Image Prompts
 
@@ -96,7 +104,7 @@ testing. Automated tests should keep using the deterministic fixtures above.
 ```text
 A realistic top-down quality control photo of spray-dried ginger powder spread
 evenly on a clean white ceramic tray. The center area of the powder should be a
-consistent warm beige ginger color close to sRGB rgb(199,161,109). Soft diffused
+consistent warm beige ginger color close to sRGB rgb(207,162,102). Soft diffused
 studio lighting, neutral white background, minimal shadows, no spoon, no
 packaging, no labels, no text, high resolution, color-accurate.
 ```
@@ -119,8 +127,9 @@ The PoC now contains minimal Day 2 robustness:
   likely tray or background.
 - **Contamination lane:** counts very dark, low-spread pixels as foreign-object
   candidates and rejects when the contaminant ratio exceeds the threshold.
-- **Consistency lane:** computes brightness standard deviation across powder
-  pixels and rejects when the powder texture is too uneven.
+- **Consistency lane:** computes brightness standard deviation and adjacent
+  pixel local contrast across powder pixels, then rejects when the powder
+  texture is too uneven.
 - **Lighting guard:** reports under-lit or over-lit powder averages as warnings.
 - **Session calibration:** lets the operator set the current measured Lab as a
   temporary browser-only reference for the selected product. This is useful for
@@ -141,8 +150,8 @@ show the rule-based approach is insufficient.
 - The Day 1 demo does not persist images, lots, or QC records to DaaS.
 - Contamination detection is a classical CV heuristic, not a trained object
   detector.
-- Texture detection is a simple variance heuristic, not particle-size analysis
-  or a trained consistency model.
+- Texture detection is a simple variance/local-contrast heuristic, not
+  particle-size analysis or a trained consistency model.
 
 ## Justification Summary
 
