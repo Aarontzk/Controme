@@ -44,6 +44,11 @@ Reference edits are versioned (FR-03) → `product_reference_versions`.
 | `delta_e` | float | computed ΔE vs reference |
 | `status` | enum | `pass` / `reject` |
 | `channel_flags` | jsonb | channels outside tolerance (explanatory) |
+| `contamination_status` | enum | `pass` / `reject` from vision pre-check |
+| `contaminant_ratio` | float | foreign-object candidate ratio in sampled ROI |
+| `consistency_status` | enum | `pass` / `reject` from texture pre-check |
+| `texture_brightness_stddev` | float | brightness variance metric for powder texture |
+| `texture_local_contrast` | float | adjacent-pixel contrast metric for rough texture |
 | `photo_url` | string | DaaS Files API reference |
 | `operator_id` | m2o → user | who/what ran the check |
 
@@ -74,7 +79,7 @@ Enforced backend (DaaS permissions) **and** frontend (route/UI gating). See
 Two demo products with reference values in
 [`lib/domain/reference-products.ts`](../lib/domain/reference-products.ts):
 
-- **Spray-Dried Ginger Powder** — L\* 68.5±4.0, a\* +7.2±2.0, b\* +32.4±3.5, ΔE max 5.0
+- **Spray-Dried Ginger Powder** — L\* 69.52±4.0, a\* +9.34±2.0, b\* +37.40±3.5, ΔE max 5.0
 - **Dragon Fruit Powder** — L\* 45.0±3.5, a\* +38.6±4.0, b\* −8.3±2.5, ΔE max 4.5
 
 Seed ≥2 `pass` + 1 `reject` lot per product. Dragon Fruit is the flagship "flagged lot" demo

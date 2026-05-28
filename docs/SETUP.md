@@ -1,69 +1,82 @@
 # Setup
 
-> ⚠️ **Stack changed.** The project moved to the **Buildpad RAD platform**
-> (Next.js 16 + Mantine v8 + DaaS + Supabase) — the app now lives at the repo root and the
-> old FastAPI `backend/` + Vite `frontend/` were removed. For current setup use the README
-> **Quick Start** (`pnpm install && pnpm dev`). The Python/Vite instructions below are
-> retained for historical reference and are pending a rewrite.
+Controme now runs as a repo-root Next.js 16 application on the Buildpad RAD
+platform. The old FastAPI `backend/` and Vite `frontend/` scaffolds are no
+longer part of the active app.
 
 ## Prerequisites
 
 - Git
-- Node.js 20+
-- Python 3.11+
-- PostgreSQL 16+ (or Supabase account)
+- Node.js 24 preferred
+- pnpm 10+
+- Access to the project's `.env.local` values for Supabase and Buildpad DaaS
 
-## Clone
+Check local tools:
 
 ```bash
-git clone https://github.com/AzkaTz/retas-siber-imut.git
+node --version
+pnpm --version
+git --version
+```
+
+## Install
+
+```bash
+git clone https://github.com/Aarontzk/Controme.git retas-siber-imut
 cd retas-siber-imut
+pnpm install
 ```
 
-## Frontend (Azka)
+`.env.local` is gitignored and must contain the live project values:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+NEXT_PUBLIC_BUILDPAD_DAAS_URL=...
+NEXT_PUBLIC_MICROSERVICE_URL_MAIN=...
+```
+
+Do not commit `.env.local` or MCP token files.
+
+## Run Locally
 
 ```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev        # http://localhost:5173
-npm run lint
-npm test
+pnpm dev
 ```
 
-## Backend (Farel)
+Default app URL: `http://localhost:3000`.
+
+Vision PoC URL: `http://localhost:3000/poc/vision`.
+
+## Verification
 
 ```bash
-cd backend
-cp .env.example .env
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements-dev.txt
-uvicorn src.main:app --reload   # http://localhost:8000
-# docs: http://localhost:8000/api/docs
-pytest
+pnpm test
+pnpm lint
+pnpm tsc --noEmit
+pnpm build
+pnpm exec playwright test e2e/vision-poc.spec.ts
 ```
 
-## Database
-
-```bash
-# TBA after stack lock — migrations via Alembic
-# alembic upgrade head
-```
-
-## Environment Variables
-
-| Key | Description |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `SECRET_KEY` | JWT signing key — never commit the real value |
-| `ALLOWED_ORIGINS` | JSON array of allowed CORS origins |
-| `APP_ENV` | `development` / `staging` / `production` |
+Playwright starts its own server on `127.0.0.1:3100`. Stop any existing process
+on that port if Playwright reports the URL is already in use.
 
 ## Branch Strategy
 
+- Work on short-lived feature branches or the shared `azka` branch when assigned.
+- Use conventional commits.
+- Run `git pull --rebase origin <branch>` before pushing.
+- Do not force-push shared branches.
+
+## Deployment
+
+AWS Amplify builds from `main` using `amplify.yml`:
+
+```bash
+pnpm install
+pnpm build
 ```
-main       → production
-develop    → staging
-feature/*  → open PR against develop
-```
+
+Production environment variables are managed through Buildpad/Amplify tooling,
+not committed files.

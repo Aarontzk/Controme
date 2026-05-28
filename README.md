@@ -3,7 +3,8 @@
 > CyberHack 2026 submission by Tim Retas Siber Imut (Aludra, Salsa, Azka, Farel).
 > Industry partner: PT Indo Aneka Atsiri (Sima Arome).
 
-**Status:** Scaffolding — problem statement releases 25 May 2026.
+**Status:** Buildpad/Next.js scaffold active. Vision QC PoC implemented at
+`/poc/vision` with browser color, contamination, and texture checks.
 
 ## Live Demo
 
@@ -18,14 +19,22 @@ Stack: **Next.js 16 + Mantine v8 + Buildpad UI** (frontend, at repo root) → **
 (backend) → **Supabase** (Postgres). Requires Node 24 + pnpm 10+.
 
 ```bash
-git clone https://github.com/AzkaTz/retas-siber-imut.git
+git clone https://github.com/Aarontzk/Controme.git retas-siber-imut
 cd retas-siber-imut
 pnpm install
 cp .mcp.json.example .mcp.json   # then fill DaaS tokens (see .env.local for live values)
 pnpm dev                         # Next.js dev server → http://localhost:3000
 ```
 
-Build / lint: `pnpm build` · `pnpm lint`.
+Build / verify:
+
+```bash
+pnpm test
+pnpm lint
+pnpm tsc --noEmit
+pnpm build
+pnpm exec playwright test e2e/vision-poc.spec.ts
+```
 
 ## Architecture
 
@@ -41,6 +50,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | [docs/SECURITY.md](docs/SECURITY.md) | RBAC, audit trail, encryption |
 | [docs/SETUP.md](docs/SETUP.md) | Dev environment setup |
 | [docs/VISION_POC.md](docs/VISION_POC.md) | Day 1 browser-only color QC PoC |
+| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Implementation change history |
 
 ## Enterprise Readiness
 

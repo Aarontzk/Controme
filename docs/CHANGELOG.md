@@ -11,3 +11,10 @@
 - Calibrated the ginger demo seed reference against generated tray-photo
   samples and added PNG Playwright fixtures for smooth, bright, blue, and rough
   powder inputs.
+- Rewrote architecture and API docs to match the current Next.js proxy plus
+  Buildpad DaaS stack, and synchronized schema docs with the latest vision
+  metrics.
+- Replaced stale setup instructions from the removed FastAPI/Vite scaffold with
+  the current pnpm/Next.js workflow.
+- Updated security documentation to use DaaS permissions, DaaS audit activity,
+  and the Next.js proxy boundary instead of custom audit infrastructure.
