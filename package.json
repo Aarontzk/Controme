@@ -50,6 +50,7 @@
     "@tiptap/react": "^3.23.6",
     "@tiptap/starter-kit": "^3.23.6",
     "axios": "^1.16.1",
+    "chroma-js": "^3.2.0",
     "clsx": "^2.0.0",
     "dayjs": "^1.11.21",
     "highlight.js": "^11.11.1",
@@ -63,6 +64,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@next/eslint-plugin-next": "^16.2.6",
+    "@playwright/test": "^1.60.0",
+    "@types/chroma-js": "^3.1.2",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

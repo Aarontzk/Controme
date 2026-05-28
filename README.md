@@ -40,6 +40,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design + ADRs |
 | [docs/SECURITY.md](docs/SECURITY.md) | RBAC, audit trail, encryption |
 | [docs/SETUP.md](docs/SETUP.md) | Dev environment setup |
+| [docs/VISION_POC.md](docs/VISION_POC.md) | Day 1 browser-only color QC PoC |
 
 ## Enterprise Readiness
 
