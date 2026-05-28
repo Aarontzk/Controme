@@ -30,6 +30,8 @@ export interface ProductReference {
   tolerance: ChannelTolerance;
   /** Reject when measured ΔE exceeds this. */
   deltaEMax: number;
+  /** Fraction of the threshold considered near-limit warning; default 0.10 = top 10%. */
+  warningMargin?: number;
   /** Approximate sRGB for UI preview only. */
   rgbApprox?: RgbColor;
 }
@@ -47,6 +49,8 @@ export interface ChannelFlag {
 export interface QCEvaluation {
   deltaE: number;
   status: QCStatus;
+  /** PASS samples inside the configured near-limit band. */
+  warningFlag: boolean;
   /** Channels outside tolerance — the human-readable "why", independent of the ΔE verdict. */
   channelFlags: ChannelFlag[];
 }
@@ -93,7 +97,18 @@ export function evaluateSample(product: ProductReference, measured: LabColor): Q
   }
 
   const status: QCStatus = deltaE > product.deltaEMax ? "reject" : "pass";
-  return { deltaE, status, channelFlags };
+  return {
+    deltaE,
+    status,
+    warningFlag: isWarningBand(product, deltaE),
+    channelFlags,
+  };
+}
+
+export function isWarningBand(product: ProductReference, deltaE: number): boolean {
+  const margin = product.warningMargin ?? 0.1;
+  const warningFloor = product.deltaEMax * (1 - margin);
+  return deltaE > warningFloor && deltaE <= product.deltaEMax;
 }
 
 /**

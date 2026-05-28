@@ -19,6 +19,7 @@ export interface DaasProductRow {
   tol_a: number;
   tol_b: number;
   delta_e_max: number;
+  warning_margin?: number | null;
   rgb_approx?: string | null;
   active?: boolean;
 }
@@ -55,6 +56,7 @@ export function mapDaasProduct(row: DaasProductRow): ProductReference {
     reference: { L: row.ref_l, a: row.ref_a, b: row.ref_b },
     tolerance: { L: row.tol_l, a: row.tol_a, b: row.tol_b },
     deltaEMax: row.delta_e_max,
+    warningMargin: typeof row.warning_margin === "number" ? row.warning_margin : undefined,
     rgbApprox: hexToRgb(row.rgb_approx),
   };
 }

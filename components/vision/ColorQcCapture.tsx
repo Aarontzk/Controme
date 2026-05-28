@@ -9,18 +9,19 @@ import {
   Button,
   Card,
   ColorSwatch,
-  FileButton,
   Group,
   Image as MantineImage,
   List,
   Paper,
-  Select,
   SimpleGrid,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
 
+import { Input } from "@/components/ui/input";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
+import { Textarea } from "@/components/ui/textarea";
 import {
   evaluateSample,
   REFERENCE_PRODUCTS,
@@ -34,6 +35,7 @@ import {
   type SamplePixelAnalysis,
 } from "@/lib/vision/sample-color";
 import { getCenterRoi } from "@/lib/vision/roi";
+import { CameraCapture } from "./CameraCapture";
 
 export interface ColorQcCaptureProps {
   products?: readonly ProductReference[];
@@ -47,6 +49,7 @@ interface SavedLotResult {
   deltaE: number;
   failedLanes: string[];
   lightingWarnings: string[];
+  warningFlag?: boolean;
 }
 
 function getRgbCss(rgb: RgbColor): string {
@@ -63,6 +66,9 @@ export function ColorQcCapture({
 }: ColorQcCaptureProps) {
   const firstProduct = products[0] ?? REFERENCE_PRODUCTS[0];
   const [selectedProductId, setSelectedProductId] = useState(firstProduct.id);
+  const [qcStage, setQcStage] = useState<"incoming" | "finish">("incoming");
+  const [lotCode, setLotCode] = useState("");
+  const [note, setNote] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [measuredRgb, setMeasuredRgb] = useState<RgbColor | null>(null);
   const [measuredLab, setMeasuredLab] = useState<LabColor | null>(null);
@@ -77,6 +83,7 @@ export function ColorQcCapture({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedLot, setSavedLot] = useState<SavedLotResult | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
 
   const product = useMemo(
@@ -86,7 +93,7 @@ export function ColorQcCapture({
   );
 
   const productOptions = useMemo(
-    () => products.map((item) => ({ value: item.id, label: item.name })),
+    () => products.map((item) => ({ value: item.id, text: item.name })),
     [products]
   );
 
@@ -157,6 +164,9 @@ export function ColorQcCapture({
       const body = new FormData();
       body.append("photo", selectedFile);
       body.append("productId", selectedProductId);
+      body.append("qcStage", qcStage);
+      body.append("lotCode", lotCode.trim());
+      body.append("note", note.trim());
       const response = await fetch("/api/qc/lots", { method: "POST", body });
       const json = (await response.json()) as {
         success?: boolean;
@@ -167,6 +177,7 @@ export function ColorQcCapture({
           deltaE: number;
           failedLanes: string[];
           lightingWarnings: string[];
+          warningFlag?: boolean;
         };
       };
       if (!response.ok || !json.success || !json.result) {
@@ -178,6 +189,7 @@ export function ColorQcCapture({
         deltaE: json.result.deltaE,
         failedLanes: json.result.failedLanes,
         lightingWarnings: json.result.lightingWarnings,
+        warningFlag: json.result.warningFlag,
       });
     } catch (caught) {
       setSaveError(
@@ -186,7 +198,7 @@ export function ColorQcCapture({
     } finally {
       setSaving(false);
     }
-  }, [selectedFile, selectedProductId]);
+  }, [lotCode, note, qcStage, selectedFile, selectedProductId]);
 
   const handleImageLoad = useCallback(
     (event: SyntheticEvent<HTMLImageElement>) => {
@@ -244,6 +256,16 @@ export function ColorQcCapture({
     []
   );
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const file = fileInputRef.current?.files?.[0] ?? null;
+      if (file && file !== selectedFile) {
+        handleFileChange(file);
+      }
+    }, 250);
+    return () => window.clearInterval(interval);
+  }, [handleFileChange, selectedFile]);
+
   return (
     <Card withBorder radius="md" p="lg">
       <Stack gap="lg">
@@ -266,29 +288,76 @@ export function ColorQcCapture({
         </Group>
 
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-          <Select
+          <SelectDropdown
             label="Product reference"
-            data={productOptions}
+            choices={productOptions}
             value={selectedProductId}
             onChange={(value) => {
-              if (value) {
+              if (typeof value === "string") {
                 setSelectedProductId(value);
                 setSessionReference(null);
               }
             }}
-            allowDeselect={false}
+            allowNone={false}
+          />
+          <SelectDropdown
+            label="QC stage"
+            choices={[
+              { value: "incoming", text: "Incoming" },
+              { value: "finish", text: "Finish" },
+            ]}
+            value={qcStage}
+            onChange={(value) => {
+              if (value === "incoming" || value === "finish") {
+                setQcStage(value);
+              }
+            }}
+            allowNone={false}
+          />
+          <Input
+            label="Lot code"
+            placeholder="LOT-DF-001"
+            value={lotCode}
+            onChange={(value) => setLotCode(String(value ?? ""))}
+            trim
+          />
+          <Textarea
+            label="Operator note"
+            placeholder="Optional visual observation"
+            value={note}
+            onChange={(value) => setNote(value ?? "")}
+            minRows={2}
+            maxRows={4}
+            trim
           />
           <Group align="flex-end">
-            <FileButton
+            <input
+              ref={fileInputRef}
+              type="file"
               accept="image/*"
               name="sample-photo"
-              inputProps={{ "aria-label": "Upload sample photo" }}
-              onChange={handleFileChange}
-            >
-              {(props) => <Button {...props}>Upload sample photo</Button>}
-            </FileButton>
+              aria-label="Upload sample photo"
+              onChange={(event) =>
+                handleFileChange(event.currentTarget.files?.[0] ?? null)
+              }
+              onInput={(event) =>
+                handleFileChange(event.currentTarget.files?.[0] ?? null)
+              }
+              style={{
+                position: "absolute",
+                width: 1,
+                height: 1,
+                opacity: 0,
+                pointerEvents: "none",
+              }}
+            />
+            <Button onClick={() => fileInputRef.current?.click()}>
+              Upload sample photo
+            </Button>
           </Group>
         </SimpleGrid>
+
+        <CameraCapture onCapture={handleFileChange} />
 
         {error ? (
           <Alert color="red" variant="light">
@@ -371,6 +440,11 @@ export function ColorQcCapture({
                     <Text data-testid="qc-delta-e">
                       {"\u0394E"} {evaluation.deltaE.toFixed(2)}
                     </Text>
+                    {evaluation.warningFlag ? (
+                      <Badge color="yellow" variant="light" data-testid="warning-flag">
+                        warning band
+                      </Badge>
+                    ) : null}
                     <Text size="sm" c="dimmed">
                       {formatLab(measuredLab)}
                     </Text>
@@ -532,6 +606,11 @@ export function ColorQcCapture({
                       >
                         {savedLot.status}
                       </Badge>
+                      {savedLot.warningFlag ? (
+                        <Badge color="yellow" variant="light">
+                          warning
+                        </Badge>
+                      ) : null}
                       <Text size="sm">
                         {"ΔE"} {savedLot.deltaE.toFixed(2)}
                       </Text>

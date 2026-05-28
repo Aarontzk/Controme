@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { deltaE76 } from "./colorimetry";
-import { buildQCLot, evaluateSample } from "./qc";
+import { buildQCLot, evaluateSample, isWarningBand } from "./qc";
 import { DRAGON_FRUIT_POWDER, GINGER_POWDER } from "./reference-products";
 
 describe("deltaE76", () => {
@@ -68,6 +68,19 @@ describe("evaluateSample", () => {
     });
     expect(result.status).toBe("pass");
     expect(result.channelFlags.map((f) => f.channel)).toEqual(["a"]);
+  });
+
+  it("marks pass results inside the warning band", () => {
+    const result = evaluateSample(DRAGON_FRUIT_POWDER, {
+      L: DRAGON_FRUIT_POWDER.reference.L + 4.1,
+      a: DRAGON_FRUIT_POWDER.reference.a,
+      b: DRAGON_FRUIT_POWDER.reference.b,
+    });
+    expect(result.status).toBe("pass");
+    expect(result.warningFlag).toBe(true);
+    expect(isWarningBand(DRAGON_FRUIT_POWDER, 4.05)).toBe(false);
+    expect(isWarningBand(DRAGON_FRUIT_POWDER, 4.06)).toBe(true);
+    expect(isWarningBand(DRAGON_FRUIT_POWDER, 4.51)).toBe(false);
   });
 });
 

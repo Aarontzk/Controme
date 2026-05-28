@@ -14,6 +14,9 @@ export const ACCEPTED_IMAGE_TYPES = [
 
 export const qcLotUploadSchema = z.object({
   productId: z.string().uuid("productId must be a valid UUID"),
+  qcStage: z.enum(["incoming", "finish"]).default("incoming"),
+  lotCode: z.string().trim().max(80).optional(),
+  note: z.string().trim().max(500).optional(),
 });
 
 export type QcLotUploadInput = z.infer<typeof qcLotUploadSchema>;

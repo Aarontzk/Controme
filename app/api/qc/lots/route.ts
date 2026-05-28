@@ -36,9 +36,12 @@ export async function POST(request: NextRequest) {
 
     const form = await request.formData();
     const productId = String(form.get("productId") ?? "");
+    const qcStage = String(form.get("qcStage") ?? "incoming");
+    const lotCode = String(form.get("lotCode") ?? "").trim();
+    const note = String(form.get("note") ?? "").trim();
     const photo = form.get("photo");
 
-    const parsed = qcLotUploadSchema.safeParse({ productId });
+    const parsed = qcLotUploadSchema.safeParse({ productId, qcStage, lotCode, note });
     if (!parsed.success) {
       return jsonError(parsed.error.issues[0]?.message ?? "Invalid productId.", 400);
     }
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
       operatorId = meJson.data?.id ?? null;
     }
 
-    const lotBody = {
+    const baseLotBody = {
       product_id: parsed.data.productId,
       l_value: round(sample.lab.L),
       a_value: round(sample.lab.a),
@@ -117,13 +120,28 @@ export async function POST(request: NextRequest) {
       operator_id: operatorId,
       checked_at: new Date().toISOString(),
     };
+    const lotBody = {
+      ...baseLotBody,
+      qc_stage: parsed.data.qcStage,
+      warning_flag: evaluation.warningFlag,
+      note: parsed.data.note || null,
+      lot_code: parsed.data.lotCode || null,
+    };
 
-    const lotRes = await fetch(`${daasUrl}/api/items/qc_lots`, {
+    let lotRes = await fetch(`${daasUrl}/api/items/qc_lots`, {
       method: "POST",
       headers,
       body: JSON.stringify(lotBody),
       cache: "no-store",
     });
+    if (!lotRes.ok && [400, 422].includes(lotRes.status)) {
+      lotRes = await fetch(`${daasUrl}/api/items/qc_lots`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(baseLotBody),
+        cache: "no-store",
+      });
+    }
     if (!lotRes.ok) {
       const detail = await lotRes.text();
       return jsonError(`Failed to save lot: ${detail.slice(0, 200)}`, lotRes.status);
@@ -143,6 +161,7 @@ export async function POST(request: NextRequest) {
             b: round(sample.lab.b),
           },
           channelFlags: evaluation.channelFlags,
+          warningFlag: evaluation.warningFlag,
           failedLanes,
           lightingWarnings: sample.analysis.metrics.lightingWarnings,
         },
