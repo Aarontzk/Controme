@@ -39,4 +39,4 @@ jobs:
           NEXT_PUBLIC_BUILDPAD_DAAS_URL: https://placeholder.daas.local
 
       - name: Test
-        run: pnpm test --if-present
+        run: pnpm test
