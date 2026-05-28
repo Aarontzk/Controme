@@ -1,0 +1,23 @@
+{
+  "_comment": "Claude Code MCP servers. Copy this file to .mcp.json (gitignored) and fill in tokens. These servers belong to the Buildpad/DaaS platform (see AGENTS.md §8) — remove them if this repo does not use Buildpad.",
+  "mcpServers": {
+    "buildpad": {
+      "command": "npx",
+      "args": ["-y", "@buildpad/mcp@latest"]
+    },
+    "daas": {
+      "type": "http",
+      "url": "https://<your-project>.daas3.buildpad.ai/api/mcp",
+      "headers": {
+        "Authorization": "Bearer <DAAS_ACCESS_TOKEN>"
+      }
+    },
+    "buildpad-platform": {
+      "type": "http",
+      "url": "https://app.buildpad.ai/api/tools/mcp",
+      "headers": {
+        "Authorization": "Bearer <BUILDPAD_PLATFORM_TOKEN>"
+      }
+    }
+  }
+}

@@ -58,3 +58,10 @@ cdk.out/
 .vercel/
 .serverless/
 tmp/
+
+# AI agent / MCP configs (contain tokens — keep .example versions committed)
+.mcp.json
+.codex/config.toml
+.kiro/settings/mcp.json
+.vscode/mcp.json
+.gemini/antigravity/mcp_config.json

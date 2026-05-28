@@ -14,12 +14,18 @@
 
 ## Quick Start
 
+Stack: **Next.js 16 + Mantine v8 + Buildpad UI** (frontend, at repo root) → **Buildpad DaaS**
+(backend) → **Supabase** (Postgres). Requires Node 24 + pnpm 10+.
+
 ```bash
 git clone https://github.com/AzkaTz/retas-siber-imut.git
 cd retas-siber-imut
-# frontend setup — TBA after stack lock (24 May)
-# backend setup  — TBA after stack lock (24 May)
+pnpm install
+cp .mcp.json.example .mcp.json   # then fill DaaS tokens (see .env.local for live values)
+pnpm dev                         # Next.js dev server → http://localhost:3000
 ```
+
+Build / lint: `pnpm build` · `pnpm lint`.
 
 ## Architecture
 
@@ -56,6 +62,44 @@ Tracking 8 components per CyberHack rubric:
 | Salsa | Concept & Market Researcher |
 | Azka | Project Manager + Frontend Engineer |
 | Farel | Backend Engineer |
+
+## AI-Assisted Development (Claude Code + Codex)
+
+This repo ships an AI agent toolkit (ported from the Buildpad scaffold and converted to
+Claude/Codex-native formats). Two agents are expected to work in parallel — **Claude Code**
+in one tab and **Codex** in the sidebar.
+
+### Instructions
+
+| File | Loaded by | Purpose |
+|---|---|---|
+| [`AGENTS.md`](AGENTS.md) | Codex (auto) | **Canonical** agent instructions — stack, rules, skills, MCP, collaboration |
+| [`CLAUDE.md`](CLAUDE.md) | Claude Code (auto) | Imports `AGENTS.md` + Claude-specific notes |
+| [`.github/copilot-instructions.md`](.github/copilot-instructions.md) | Copilot | Full Buildpad platform steering (authoritative — every hard rule & workflow) |
+
+> Edit **`AGENTS.md`** to change instructions — `CLAUDE.md` imports it, so both agents stay
+> in sync.
+
+### Skills
+
+`.claude/skills/<name>/SKILL.md` are reusable task playbooks for the Buildpad/Next.js stack.
+Claude Code auto-discovers them as slash commands (`/create-project`, `/create-collection`,
+`/review-code`, …); Codex reads them on demand. Full catalog in `AGENTS.md` §4.
+
+### MCP servers
+
+- **Claude Code** — copy [`.mcp.json.example`](.mcp.json.example) → `.mcp.json` (gitignored)
+  and fill tokens.
+- **Codex** — merge the `[mcp_servers.*]` blocks from [`.codex/config.toml`](.codex/) into
+  your global `~/.codex/config.toml`. See [`.codex/README.md`](.codex/README.md).
+
+The preconfigured servers (`buildpad`, `daas`, `buildpad-platform`) are the project's
+DaaS backend + Buildpad CLI + Amplify management tools.
+
+### Two-agent collaboration rules
+
+Branch per task, commit small atomic slices, `git pull --rebase` before pushing, and never
+have both agents edit `main` or the same files concurrently. Full rules in `AGENTS.md` §0.
 
 ## License
 
