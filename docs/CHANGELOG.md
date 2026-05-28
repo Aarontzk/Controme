@@ -18,3 +18,5 @@
   the current pnpm/Next.js workflow.
 - Updated security documentation to use DaaS permissions, DaaS audit activity,
   and the Next.js proxy boundary instead of custom audit infrastructure.
+- Added the cleaned Retas Siber Imut research and PRD document, aligned with
+  the current color, contamination, and texture screening PoC.
