@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { evaluateSample, GINGER_POWDER } from "@/lib/domain";
 
-import { averageRgb, rgbToLab } from "./sample-color";
+import { analyzeSamplePixels, averageRgb, rgbToLab } from "./sample-color";
 
 describe("averageRgb", () => {
   it("averages opaque RGBA pixels into rounded sRGB channels", () => {
@@ -49,5 +49,51 @@ describe("rgbToLab", () => {
     const result = evaluateSample(GINGER_POWDER, lab);
 
     expect(result.status).toBe("pass");
+  });
+});
+
+describe("analyzeSamplePixels", () => {
+  it("averages powder-like pixels while excluding white tray pixels", () => {
+    const pixels = new Uint8ClampedArray([
+      245, 245, 245, 255,
+      199, 161, 109, 255,
+      201, 159, 111, 255,
+      250, 250, 250, 255,
+    ]);
+
+    const result = analyzeSamplePixels(pixels, { minPowderPixels: 1 });
+
+    expect(result.rgb).toEqual({ r: 200, g: 160, b: 110 });
+    expect(result.metrics.powderPixels).toBe(2);
+    expect(result.metrics.backgroundPixels).toBe(2);
+  });
+
+  it("flags dark foreign objects and excludes them from color averaging", () => {
+    const pixels = new Uint8ClampedArray([
+      199, 161, 109, 255,
+      201, 159, 111, 255,
+      20, 20, 18, 255,
+      200, 160, 110, 255,
+    ]);
+
+    const result = analyzeSamplePixels(pixels, {
+      minPowderPixels: 1,
+      contaminationRatioMax: 0.2,
+    });
+
+    expect(result.rgb).toEqual({ r: 200, g: 160, b: 110 });
+    expect(result.metrics.contaminantPixels).toBe(1);
+    expect(result.contamination.status).toBe("reject");
+  });
+
+  it("warns when not enough powder pixels are available", () => {
+    const pixels = new Uint8ClampedArray([
+      245, 245, 245, 255,
+      250, 250, 250, 255,
+    ]);
+
+    expect(() => analyzeSamplePixels(pixels, { minPowderPixels: 1 })).toThrow(
+      "No powder pixels"
+    );
   });
 });

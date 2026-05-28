@@ -28,7 +28,11 @@ import {
   type ProductReference,
   type RgbColor,
 } from "@/lib/domain";
-import { averageRgb, rgbToLab } from "@/lib/vision/sample-color";
+import {
+  analyzeSamplePixels,
+  rgbToLab,
+  type SamplePixelAnalysis,
+} from "@/lib/vision/sample-color";
 
 export interface ColorQcCaptureProps {
   products?: readonly ProductReference[];
@@ -69,6 +73,8 @@ export function ColorQcCapture({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [measuredRgb, setMeasuredRgb] = useState<RgbColor | null>(null);
   const [measuredLab, setMeasuredLab] = useState<LabColor | null>(null);
+  const [sampleAnalysis, setSampleAnalysis] =
+    useState<SamplePixelAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -89,6 +95,21 @@ export function ColorQcCapture({
     [measuredLab, product]
   );
 
+  const finalStatus = useMemo(() => {
+    if (!evaluation || !sampleAnalysis) {
+      return null;
+    }
+
+    if (
+      evaluation.status === "reject" ||
+      sampleAnalysis.contamination.status === "reject"
+    ) {
+      return "reject";
+    }
+
+    return "pass";
+  }, [evaluation, sampleAnalysis]);
+
   const handleFileChange = useCallback((file: File | null) => {
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
@@ -97,6 +118,7 @@ export function ColorQcCapture({
 
     setMeasuredRgb(null);
     setMeasuredLab(null);
+    setSampleAnalysis(null);
     setError(null);
 
     if (!file) {
@@ -137,10 +159,11 @@ export function ColorQcCapture({
           roi.width,
           roi.height
         );
-        const rgb = averageRgb(imageData.data);
-        const lab = rgbToLab(rgb);
-        setMeasuredRgb(rgb);
+        const analysis = analyzeSamplePixels(imageData.data);
+        const lab = rgbToLab(analysis.rgb);
+        setMeasuredRgb(analysis.rgb);
         setMeasuredLab(lab);
+        setSampleAnalysis(analysis);
         setError(null);
       } catch (caught) {
         const message =
@@ -172,13 +195,13 @@ export function ColorQcCapture({
               Center ROI average color against the selected product reference.
             </Text>
           </Box>
-          {evaluation ? (
+          {finalStatus ? (
             <Badge
-              color={evaluation.status === "pass" ? "green" : "red"}
+              color={finalStatus === "pass" ? "green" : "red"}
               size="lg"
               data-testid="qc-status"
             >
-              {evaluation.status}
+              {finalStatus}
             </Badge>
           ) : null}
         </Group>
@@ -268,9 +291,18 @@ export function ColorQcCapture({
 
             <Paper withBorder p="md" radius="md">
               <Stack gap="xs">
-                <Text fw={600}>Result</Text>
+                <Text fw={600}>Color result</Text>
                 {evaluation && measuredLab ? (
                   <>
+                    <Group gap="xs">
+                      <Text size="sm">Color lane</Text>
+                      <Badge
+                        color={evaluation.status === "pass" ? "green" : "red"}
+                        data-testid="color-status"
+                      >
+                        {evaluation.status}
+                      </Badge>
+                    </Group>
                     <Text data-testid="qc-delta-e">
                       {"\u0394E"} {evaluation.deltaE.toFixed(2)}
                     </Text>
@@ -295,6 +327,59 @@ export function ColorQcCapture({
                 ) : (
                   <Text c="dimmed" size="sm">
                     Delta E and verdict appear after image load.
+                  </Text>
+                )}
+              </Stack>
+            </Paper>
+
+            <Paper withBorder p="md" radius="md">
+              <Stack gap="xs">
+                <Text fw={600}>Powder and contamination checks</Text>
+                {sampleAnalysis ? (
+                  <>
+                    <Group gap="xs">
+                      <Text size="sm">Contamination lane</Text>
+                      <Badge
+                        color={
+                          sampleAnalysis.contamination.status === "pass"
+                            ? "green"
+                            : "red"
+                        }
+                        data-testid="contamination-status"
+                      >
+                        {sampleAnalysis.contamination.status}
+                      </Badge>
+                    </Group>
+                    <Text size="sm" data-testid="powder-pixel-count">
+                      Powder pixels: {sampleAnalysis.metrics.powderPixels} /{" "}
+                      {sampleAnalysis.metrics.totalOpaquePixels}
+                    </Text>
+                    <Text size="sm" data-testid="contaminant-ratio">
+                      Contaminant ratio:{" "}
+                      {(sampleAnalysis.metrics.contaminantRatio * 100).toFixed(
+                        2
+                      )}
+                      %
+                    </Text>
+                    <Text size="sm">
+                      Background/tray pixels excluded:{" "}
+                      {sampleAnalysis.metrics.backgroundPixels}
+                    </Text>
+                    {sampleAnalysis.metrics.lightingWarnings.length > 0 ? (
+                      <List size="sm" spacing={4}>
+                        {sampleAnalysis.metrics.lightingWarnings.map(
+                          (warning) => (
+                            <List.Item key={warning}>{warning}</List.Item>
+                          )
+                        )}
+                      </List>
+                    ) : (
+                      <Text size="sm">Lighting guard: no warning.</Text>
+                    )}
+                  </>
+                ) : (
+                  <Text c="dimmed" size="sm">
+                    Powder mask and contamination checks appear after image load.
                   </Text>
                 )}
               </Stack>

@@ -4,3 +4,5 @@
 
 - Added Vision Color QC PoC documentation covering the browser pipeline,
   deterministic fixtures, manual generated-image prompts, and Day 1 limitations.
+- Expanded the Vision PoC with powder-only masking, rule-based contamination
+  detection, and lighting warnings for more realistic photo checks.
