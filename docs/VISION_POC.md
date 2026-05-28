@@ -1,8 +1,30 @@
-# Vision QC PoC
+# Vision QC
 
-The vision spike lives at `/poc/vision`. It is intentionally isolated from
-auth-gated workflows, DaaS persistence, file storage, model training, and lot
-records.
+The **production** capture flow is auth-gated at `/qc/capture` with an immutable
+history at `/qc/lots`. The original browser-only **spike** still lives at
+`/poc/vision` for quick experimentation.
+
+## Production architecture (`/qc/capture`)
+
+- Auth-gated under the `(authenticated)` route group; products are fetched from
+  the DaaS `products` collection (permission-gated by the operator's JWT).
+- The browser shows an **advisory** preview (same `lib/vision` code).
+- On **Save QC lot**, the photo + `productId` are posted to `POST /api/qc/lots`,
+  which is **server-authoritative**: it decodes the photo with `sharp`
+  (EXIF auto-orientation, downscale to ≤1024px), applies full-frame gray-world
+  white balance, samples the same center ROI, then recomputes ΔE + contamination
+  + consistency via `lib/vision/image-pipeline.server.ts` and
+  `lib/domain/evaluateSample`. A tampered client request cannot forge a verdict.
+- The photo is uploaded to DaaS Files and an **immutable** `qc_lots` record is
+  created (create + read only via RBAC). DaaS `daas_activity` provides the audit
+  trail automatically — no custom audit table.
+- Uploads are validated at the boundary with zod (`lib/vision/validation.ts`):
+  image MIME type and an 8 MB size cap.
+
+## Spike scope (`/poc/vision`)
+
+The spike is intentionally isolated from auth, DaaS persistence, and file
+storage — it is browser-only and advisory.
 
 ## Scope
 
@@ -143,11 +165,13 @@ show the rule-based approach is insufficient.
 
 ## Known Limitations
 
-- The PoC has lighting warnings, but no full white-balance correction yet.
+- White balance is full-frame gray-world (assumes the tray/background averages
+  neutral). It is not a true white-reference-card correction, so a tightly
+  cropped, fully coloured frame can still be over/under-corrected.
 - The ROI is fixed to the center 50% x 50%; there is no manual ROI selection yet.
 - `product.rgbApprox` is UI preview metadata, not the QC reference itself.
-- Delta E and the pass/reject verdict must remain owned by `evaluateSample`.
-- The Day 1 demo does not persist images, lots, or QC records to DaaS.
+- Delta E and the pass/reject verdict are owned by `evaluateSample`, recomputed
+  server-side — the client preview is advisory.
 - Contamination detection is a classical CV heuristic, not a trained object
   detector.
 - Texture detection is a simple variance/local-contrast heuristic, not

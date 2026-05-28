@@ -33,16 +33,20 @@ import {
   rgbToLab,
   type SamplePixelAnalysis,
 } from "@/lib/vision/sample-color";
+import { getCenterRoi } from "@/lib/vision/roi";
 
 export interface ColorQcCaptureProps {
   products?: readonly ProductReference[];
+  /** When true, show "Save QC lot" — posts to /api/qc/lots for server-authoritative recompute + persistence. */
+  persist?: boolean;
 }
 
-interface RoiRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+interface SavedLotResult {
+  lotId: string | null;
+  status: "pass" | "reject";
+  deltaE: number;
+  failedLanes: string[];
+  lightingWarnings: string[];
 }
 
 function getRgbCss(rgb: RgbColor): string {
@@ -53,20 +57,9 @@ function formatLab(lab: LabColor): string {
   return `L ${lab.L.toFixed(2)}, a ${lab.a.toFixed(2)}, b ${lab.b.toFixed(2)}`;
 }
 
-function getCenterRoi(width: number, height: number): RoiRect {
-  const roiWidth = Math.max(1, Math.floor(width * 0.5));
-  const roiHeight = Math.max(1, Math.floor(height * 0.5));
-
-  return {
-    x: Math.floor((width - roiWidth) / 2),
-    y: Math.floor((height - roiHeight) / 2),
-    width: roiWidth,
-    height: roiHeight,
-  };
-}
-
 export function ColorQcCapture({
   products = REFERENCE_PRODUCTS,
+  persist = false,
 }: ColorQcCaptureProps) {
   const firstProduct = products[0] ?? REFERENCE_PRODUCTS[0];
   const [selectedProductId, setSelectedProductId] = useState(firstProduct.id);
@@ -79,6 +72,10 @@ export function ColorQcCapture({
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedLot, setSavedLot] = useState<SavedLotResult | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
 
@@ -135,6 +132,9 @@ export function ColorQcCapture({
     setMeasuredLab(null);
     setSampleAnalysis(null);
     setError(null);
+    setSelectedFile(file);
+    setSavedLot(null);
+    setSaveError(null);
 
     if (!file) {
       setImageUrl(null);
@@ -145,6 +145,48 @@ export function ColorQcCapture({
     objectUrlRef.current = nextUrl;
     setImageUrl(nextUrl);
   }, []);
+
+  const handleSaveLot = useCallback(async () => {
+    if (!selectedFile) {
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
+    setSavedLot(null);
+    try {
+      const body = new FormData();
+      body.append("photo", selectedFile);
+      body.append("productId", selectedProductId);
+      const response = await fetch("/api/qc/lots", { method: "POST", body });
+      const json = (await response.json()) as {
+        success?: boolean;
+        error?: string;
+        data?: { id?: string };
+        result?: {
+          status: "pass" | "reject";
+          deltaE: number;
+          failedLanes: string[];
+          lightingWarnings: string[];
+        };
+      };
+      if (!response.ok || !json.success || !json.result) {
+        throw new Error(json.error ?? "Failed to save QC lot.");
+      }
+      setSavedLot({
+        lotId: json.data?.id ?? null,
+        status: json.result.status,
+        deltaE: json.result.deltaE,
+        failedLanes: json.result.failedLanes,
+        lightingWarnings: json.result.lightingWarnings,
+      });
+    } catch (caught) {
+      setSaveError(
+        caught instanceof Error ? caught.message : "Failed to save QC lot."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [selectedFile, selectedProductId]);
 
   const handleImageLoad = useCallback(
     (event: SyntheticEvent<HTMLImageElement>) => {
@@ -449,6 +491,72 @@ export function ColorQcCapture({
             </Paper>
           </Stack>
         </SimpleGrid>
+
+        {persist ? (
+          <Paper withBorder p="md" radius="md">
+            <Stack gap="sm">
+              <Group justify="space-between" align="center">
+                <Box>
+                  <Text fw={600}>Save QC lot</Text>
+                  <Text size="xs" c="dimmed">
+                    {"ΔE"} and the verdict are recomputed from the photo on
+                    the server, then stored as an immutable lot.
+                  </Text>
+                </Box>
+                <Button
+                  onClick={handleSaveLot}
+                  loading={saving}
+                  disabled={!selectedFile || !measuredLab}
+                  data-testid="save-lot"
+                >
+                  Save QC lot
+                </Button>
+              </Group>
+              {saveError ? (
+                <Alert color="red" variant="light" data-testid="save-error">
+                  {saveError}
+                </Alert>
+              ) : null}
+              {savedLot ? (
+                <Alert
+                  color={savedLot.status === "pass" ? "green" : "red"}
+                  variant="light"
+                  data-testid="saved-lot"
+                >
+                  <Stack gap={4}>
+                    <Group gap="xs">
+                      <Text fw={600}>Saved — server verdict:</Text>
+                      <Badge
+                        color={savedLot.status === "pass" ? "green" : "red"}
+                        data-testid="saved-status"
+                      >
+                        {savedLot.status}
+                      </Badge>
+                      <Text size="sm">
+                        {"ΔE"} {savedLot.deltaE.toFixed(2)}
+                      </Text>
+                    </Group>
+                    {savedLot.lotId ? (
+                      <Text size="xs" c="dimmed">
+                        Lot {savedLot.lotId}
+                      </Text>
+                    ) : null}
+                    {savedLot.failedLanes.length > 0 ? (
+                      <Text size="sm">
+                        Failed lanes: {savedLot.failedLanes.join(", ")}
+                      </Text>
+                    ) : null}
+                    {savedLot.lightingWarnings.map((warning) => (
+                      <Text key={warning} size="xs" c="dimmed">
+                        {warning}
+                      </Text>
+                    ))}
+                  </Stack>
+                </Alert>
+              ) : null}
+            </Stack>
+          </Paper>
+        ) : null}
 
         <canvas ref={canvasRef} hidden aria-hidden="true" />
       </Stack>

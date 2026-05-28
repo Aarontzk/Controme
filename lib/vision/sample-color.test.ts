@@ -5,14 +5,28 @@ import { evaluateSample, GINGER_POWDER } from "@/lib/domain";
 import { analyzeSamplePixels, averageRgb, rgbToLab } from "./sample-color";
 
 describe("averageRgb", () => {
-  it("averages opaque RGBA pixels into rounded sRGB channels", () => {
+  it("returns a solid colour unchanged", () => {
     const pixels = new Uint8ClampedArray([
-      10, 20, 30, 255,
-      30, 40, 50, 255,
+      20, 30, 40, 255,
+      20, 30, 40, 255,
       20, 30, 40, 255,
     ]);
 
     expect(averageRgb(pixels)).toEqual({ r: 20, g: 30, b: 40 });
+  });
+
+  it("averages in linear light, not naive sRGB mean", () => {
+    // Black + white: linear mean is 0.5 → ~188 sRGB, brighter than the naive 128.
+    const pixels = new Uint8ClampedArray([
+      0, 0, 0, 255,
+      255, 255, 255, 255,
+    ]);
+
+    const result = averageRgb(pixels);
+    expect(result.r).toBeGreaterThan(180);
+    expect(result.r).toBeLessThan(192);
+    expect(result.r).toBe(result.g);
+    expect(result.g).toBe(result.b);
   });
 
   it("skips transparent pixels below the alpha threshold", () => {

@@ -33,27 +33,32 @@ Reference edits are versioned (FR-03) → `product_reference_versions`.
 
 ### `qc_lots` — immutable QC check records (FR-02, PRD §4.3)
 
+Field names below match the live DaaS collection.
+
 | Field | Type | Notes |
 |---|---|---|
-| `id` / `lot_id` | uuid PK | |
-| `product_id` | m2o → `products` | |
-| `checked_at` | timestamptz | check time (indexed) |
+| `id` | uuid PK | |
+| `product_id` | m2o → `products` | indexed |
+| `checked_at` | timestamptz | check time (indexed desc) |
 | `l_value` | float | measured L\* |
 | `a_value` | float | measured a\* |
 | `b_value` | float | measured b\* |
 | `delta_e` | float | computed ΔE vs reference |
-| `status` | enum | `pass` / `reject` |
-| `channel_flags` | jsonb | channels outside tolerance (explanatory) |
-| `contamination_status` | enum | `pass` / `reject` from vision pre-check |
-| `contaminant_ratio` | float | foreign-object candidate ratio in sampled ROI |
-| `consistency_status` | enum | `pass` / `reject` from texture pre-check |
-| `texture_brightness_stddev` | float | brightness variance metric for powder texture |
-| `texture_local_contrast` | float | adjacent-pixel contrast metric for rough texture |
-| `photo_url` | string | DaaS Files API reference |
-| `operator_id` | m2o → user | who/what ran the check |
+| `status` | enum | final `pass` / `reject` (indexed) — reject if any lane fails |
+| `channel_flags` | json | channels outside tolerance (explanatory) |
+| `contaminant_ratio` | float | foreign-object pixel ratio in ROI (contamination lane) |
+| `brightness_stddev` | float | powder brightness std dev (consistency lane) |
+| `texture_contrast` | float | adjacent-pixel local contrast (consistency lane) |
+| `reject_reason` | string | failed lane(s): `color` / `contamination` / `consistency` |
+| `photo` | file → `daas_files` | DaaS Files reference |
+| `operator_id` | m2o → `daas_users` | who ran the check |
 
-**Immutability:** create + read only; no update/delete in the UI or proxy. Corrections create
-a new lot. ΔE/status are computed server-side (or in `lib/domain`) — never client-supplied.
+**Immutability:** create + read only; no update/delete in the UI or proxy (enforced via RBAC).
+Corrections create a new lot. **ΔE/status are recomputed server-side** in
+[`app/api/qc/lots/route.ts`](../app/api/qc/lots/route.ts) from the uploaded photo (sharp →
+[`lib/vision/image-pipeline.server.ts`](../lib/vision/image-pipeline.server.ts) →
+[`lib/domain/evaluateSample`](../lib/domain/qc.ts)) — the browser preview is advisory and is
+never trusted for the stored verdict.
 
 ### `product_reference_versions` — reference history (FR-03)
 
