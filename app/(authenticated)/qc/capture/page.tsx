@@ -31,7 +31,7 @@ export default async function QcCapturePage() {
   const products = await fetchProducts();
 
   return (
-    <Container size="lg" py="xl">
+    <Container size="xl" py="xl">
       <Stack gap="lg">
         <Box
           style={{
@@ -39,7 +39,9 @@ export default async function QcCapturePage() {
             paddingBottom: "var(--ds-spacing-4)"
           }}
         >
-          <Title order={1}>QC Capture</Title>
+          <Title order={1} style={{ color: "var(--ds-primary)" }}>
+            Color Analysis Terminal
+          </Title>
           <Text c="dimmed">
             Upload a sample photo. {"\u0394E"} and the pass/reject verdict are
             recomputed and recorded server-side.

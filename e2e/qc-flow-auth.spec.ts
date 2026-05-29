@@ -49,7 +49,9 @@ test.describe("authenticated QC flow", () => {
     // Smooth path: root redirects an operator straight to capture — no manual URLs.
     await page.goto("/");
     await page.waitForURL("**/qc/capture");
-    await expect(page.getByRole("heading", { name: "QC Capture", level: 1 })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Color Analysis Terminal", level: 1 })
+    ).toBeVisible();
 
     // No-products alert means seed/permissions are wrong — fail loudly.
     await expect(page.getByText("No products available.")).toHaveCount(0);

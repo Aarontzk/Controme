@@ -288,42 +288,60 @@ export function ColorQcCapture({
     return () => window.clearInterval(interval);
   }, [handleFileChange, selectedFile]);
 
+  const refLab = activeProduct.reference;
+  const deltas = measuredLab
+    ? {
+        L: measuredLab.L - refLab.L,
+        a: measuredLab.a - refLab.a,
+        b: measuredLab.b - refLab.b,
+      }
+    : null;
+
+  const cielabTiles: ReadonlyArray<{
+    key: "L" | "a" | "b";
+    label: string;
+    value: number | undefined;
+    delta: number | undefined;
+  }> = [
+    { key: "L", label: "L* (Lightness)", value: measuredLab?.L, delta: deltas?.L },
+    { key: "a", label: "a* (Red/Green)", value: measuredLab?.a, delta: deltas?.a },
+    { key: "b", label: "b* (Yellow/Blue)", value: measuredLab?.b, delta: deltas?.b },
+  ];
+
+  const diagnosisText = (() => {
+    if (!evaluation) return "System diagnosis will appear here after analysis.";
+    if (finalStatus === "reject") {
+      const reason =
+        evaluation.channelFlags.length > 0
+          ? evaluation.channelFlags
+              .map((flag) => `${flag.channel} ${flag.direction}`)
+              .join(", ")
+          : "contamination / consistency lane";
+      return `REJECT — out of spec on ${reason}.`;
+    }
+    if (evaluation.warningFlag) {
+      return "PASS — within tolerance, but ΔE is in the warning band. Monitor this lot.";
+    }
+    return "PASS — sample is within colour, contamination, and consistency tolerances.";
+  })();
+
   return (
-    <Card withBorder radius="md" p="lg" style={neutralPanelStyle}>
-      <Stack gap="lg">
-        <Group justify="space-between" align="flex-start">
+    <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg" style={{ alignItems: "stretch" }}>
+      {/* 1. Sample Capture */}
+      <Card withBorder radius="md" p="lg" style={neutralPanelStyle}>
+        <Stack gap="md">
           <Box>
-            <Title order={3}>Color {"\u0394E"} QC Capture</Title>
+            <Title order={3} style={{ color: "var(--ds-primary)" }}>
+              1. Sample Capture
+            </Title>
             <Text c="dimmed" size="sm">
-              Center ROI color, texture, and contamination checks.
+              Pick the product, tag the lot, then capture the powder sample.
             </Text>
           </Box>
-        </Group>
 
-        {finalStatus ? (
-          <Paper withBorder p="md" radius="md" style={statusPanelStyle(finalStatus)}>
-            <Group justify="space-between" align="center">
-              <Box>
-                <Text fw={700}>QC Status Classification</Text>
-                <Text size="sm" c="dimmed">
-                  Sample measured through color, contamination, and consistency lanes.
-                </Text>
-              </Box>
-              <Badge
-                color={statusColor(finalStatus)}
-                size="lg"
-                variant="outline"
-                data-testid="qc-status"
-              >
-                {finalStatus}
-              </Badge>
-            </Group>
-          </Paper>
-        ) : null}
-
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <SelectDropdown
-            label="Product reference"
+            label="Product Reference"
+            placeholder="Select product to inspect..."
             choices={productOptions}
             value={selectedProductId}
             onChange={(value) => {
@@ -334,8 +352,9 @@ export function ColorQcCapture({
             }}
             allowNone={false}
           />
+
           <SelectDropdown
-            label="QC stage"
+            label="QC Stage"
             choices={[
               { value: "incoming", text: "Incoming" },
               { value: "finish", text: "Finish" },
@@ -348,290 +367,336 @@ export function ColorQcCapture({
             }}
             allowNone={false}
           />
+
           <Input
-            label="Lot code"
-            placeholder="LOT-DF-001"
+            label="Lot Number"
+            placeholder="Enter or scan Lot Number..."
             value={lotCode}
             onChange={(value) => setLotCode(String(value ?? ""))}
             trim
           />
+
+          <Box>
+            <Text fw={600} size="sm" mb="var(--ds-spacing-1)">
+              Camera Viewfinder
+            </Text>
+            <Box
+              style={{
+                position: "relative",
+                borderRadius: "var(--ds-radius-md, 12px)",
+                overflow: "hidden",
+                background: "#23211c",
+                minHeight: 280,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {imageUrl ? (
+                <MantineImage
+                  src={imageUrl}
+                  alt="Uploaded QC sample"
+                  fit="contain"
+                  mah={320}
+                  onLoad={handleImageLoad}
+                  data-testid="qc-preview"
+                />
+              ) : (
+                <Stack align="center" gap="var(--ds-spacing-4)" py="var(--ds-spacing-8)">
+                  <Box
+                    style={{
+                      width: 120,
+                      height: 120,
+                      border: "2px dashed rgba(255,255,255,0.5)",
+                      borderRadius: "var(--ds-radius-sm, 4px)",
+                    }}
+                  />
+                  <Text size="sm" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    Align sample within the target box
+                  </Text>
+                </Stack>
+              )}
+            </Box>
+          </Box>
+
+          <CameraCapture onCapture={handleFileChange} />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            name="sample-photo"
+            aria-label="Upload sample photo"
+            onChange={(event) =>
+              handleFileChange(event.currentTarget.files?.[0] ?? null)
+            }
+            onInput={(event) =>
+              handleFileChange(event.currentTarget.files?.[0] ?? null)
+            }
+            style={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              opacity: 0,
+              pointerEvents: "none",
+            }}
+          />
+          <Button color="cta" fullWidth onClick={() => fileInputRef.current?.click()}>
+            Take / Upload Photo
+          </Button>
+
+          {error ? (
+            <Alert color="danger" variant="light">
+              {error}
+            </Alert>
+          ) : null}
+        </Stack>
+      </Card>
+
+      {/* 2. Analysis Results */}
+      <Card withBorder radius="md" p="lg" style={neutralPanelStyle}>
+        <Stack gap="md">
+          <Group justify="space-between" align="center">
+            <Title order={3} style={{ color: "var(--ds-primary)" }}>
+              2. Analysis Results
+            </Title>
+            {finalStatus ? (
+              <Badge
+                color={statusColor(finalStatus)}
+                size="lg"
+                variant="outline"
+                data-testid="qc-status"
+              >
+                {finalStatus}
+              </Badge>
+            ) : (
+              <Badge color="gray" size="lg" variant="outline">
+                PENDING
+              </Badge>
+            )}
+          </Group>
+
+          <Paper
+            withBorder
+            p="lg"
+            radius="md"
+            style={evaluation ? statusPanelStyle(evaluation.status) : neutralPanelStyle}
+          >
+            <Stack gap="var(--ds-spacing-2)" align="center">
+              <Text size="sm" c="dimmed">
+                Total Color Difference ({"ΔE"})
+              </Text>
+              <Text
+                fw={700}
+                data-testid="qc-delta-e"
+                style={{ fontSize: "2.25rem", lineHeight: 1.1 }}
+              >
+                {evaluation ? evaluation.deltaE.toFixed(2) : "—"}
+              </Text>
+              <Group gap="xs" justify="center">
+                {evaluation ? (
+                  <Badge
+                    color={statusColor(evaluation.status)}
+                    variant="outline"
+                    data-testid="color-status"
+                  >
+                    color {evaluation.status}
+                  </Badge>
+                ) : null}
+                {evaluation?.warningFlag ? (
+                  <Badge color="warning" variant="outline" data-testid="warning-flag">
+                    warning band
+                  </Badge>
+                ) : null}
+              </Group>
+              <Group gap="xs" justify="center">
+                <ColorSwatch
+                  color={
+                    product.rgbApprox
+                      ? getRgbCss(product.rgbApprox)
+                      : "var(--ds-border-color)"
+                  }
+                  size={28}
+                  data-testid="reference-swatch"
+                />
+                <Text size="xs" c="dimmed">
+                  reference
+                </Text>
+                <ColorSwatch
+                  color={measuredRgb ? getRgbCss(measuredRgb) : "var(--ds-gray-300)"}
+                  size={28}
+                  data-testid="measured-swatch"
+                />
+                <Text size="xs" c="dimmed">
+                  {measuredLab
+                    ? formatLab(measuredLab)
+                    : "awaiting capture to calculate difference"}
+                </Text>
+              </Group>
+              {sessionReference ? (
+                <Badge color="primary" variant="outline">
+                  session calibrated
+                </Badge>
+              ) : null}
+            </Stack>
+          </Paper>
+
+          <Box>
+            <Text fw={600} size="sm" mb="var(--ds-spacing-2)">
+              CIELAB Values
+            </Text>
+            <SimpleGrid cols={3} spacing="xs">
+              {cielabTiles.map((tile) => (
+                <Paper
+                  key={tile.key}
+                  withBorder
+                  p="xs"
+                  radius="md"
+                  style={neutralPanelStyle}
+                >
+                  <Stack gap={2} align="center">
+                    <Text size="xs" c="dimmed" ta="center">
+                      {tile.label}
+                    </Text>
+                    <Text fw={700}>
+                      {typeof tile.value === "number" ? tile.value.toFixed(1) : "—"}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {"Δ"}{" "}
+                      {typeof tile.delta === "number"
+                        ? `${tile.delta >= 0 ? "+" : ""}${tile.delta.toFixed(1)}`
+                        : "—"}
+                    </Text>
+                  </Stack>
+                </Paper>
+              ))}
+            </SimpleGrid>
+          </Box>
+
+          <Paper
+            withBorder
+            p="md"
+            radius="md"
+            style={evaluation ? statusPanelStyle(finalStatus ?? "pass") : neutralPanelStyle}
+          >
+            <Text size="sm">{diagnosisText}</Text>
+            {evaluation && measuredLab ? (
+              <Group gap="xs" mt="var(--ds-spacing-2)">
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="primary"
+                  onClick={() => setSessionReference(measuredLab)}
+                >
+                  Use as session reference
+                </Button>
+                {sessionReference ? (
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    color="primary"
+                    onClick={() => setSessionReference(null)}
+                  >
+                    Reset reference
+                  </Button>
+                ) : null}
+              </Group>
+            ) : null}
+          </Paper>
+
+          <Paper
+            withBorder
+            p="md"
+            radius="md"
+            style={
+              sampleAnalysis
+                ? statusPanelStyle(
+                    sampleAnalysis.contamination.status === "reject" ||
+                      sampleAnalysis.consistency.status === "reject"
+                      ? "reject"
+                      : "pass"
+                  )
+                : neutralPanelStyle
+            }
+          >
+            <Stack gap="xs">
+              <Text fw={600} size="sm">
+                Powder &amp; contamination
+              </Text>
+              {sampleAnalysis ? (
+                <>
+                  <Group gap="xs">
+                    <Text size="sm">Contamination lane</Text>
+                    <Badge
+                      color={statusColor(sampleAnalysis.contamination.status)}
+                      variant="outline"
+                      data-testid="contamination-status"
+                    >
+                      {sampleAnalysis.contamination.status}
+                    </Badge>
+                    <Text size="sm">Consistency lane</Text>
+                    <Badge
+                      color={statusColor(sampleAnalysis.consistency.status)}
+                      variant="outline"
+                      data-testid="consistency-status"
+                    >
+                      {sampleAnalysis.consistency.status}
+                    </Badge>
+                  </Group>
+                  <Text size="xs" c="dimmed" data-testid="powder-pixel-count">
+                    Powder pixels: {sampleAnalysis.metrics.powderPixels} /{" "}
+                    {sampleAnalysis.metrics.totalOpaquePixels}
+                  </Text>
+                  <Text size="xs" c="dimmed" data-testid="contaminant-ratio">
+                    Contaminant ratio:{" "}
+                    {(sampleAnalysis.metrics.contaminantRatio * 100).toFixed(2)}%
+                  </Text>
+                  <Text size="xs" c="dimmed" data-testid="texture-stddev">
+                    Texture brightness std dev:{" "}
+                    {sampleAnalysis.metrics.brightnessStdDev.toFixed(2)}
+                  </Text>
+                  <Text size="xs" c="dimmed" data-testid="texture-contrast">
+                    Texture local contrast:{" "}
+                    {sampleAnalysis.metrics.textureContrast.toFixed(2)}
+                  </Text>
+                  {sampleAnalysis.metrics.lightingWarnings.length > 0 ? (
+                    <List size="xs" spacing="xs">
+                      {sampleAnalysis.metrics.lightingWarnings.map((warning) => (
+                        <List.Item key={warning}>{warning}</List.Item>
+                      ))}
+                    </List>
+                  ) : null}
+                </>
+              ) : (
+                <Text c="dimmed" size="sm">
+                  Powder mask and contamination checks appear after image load.
+                </Text>
+              )}
+            </Stack>
+          </Paper>
+
           <Textarea
-            label="Operator note"
-            placeholder="Optional visual observation"
+            label="Notes (Optional)"
+            placeholder="Enter any visual contamination or texture notes here..."
             value={note}
             onChange={(value) => setNote(value ?? "")}
             minRows={2}
             maxRows={4}
             trim
           />
-          <Group align="flex-end">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              name="sample-photo"
-              aria-label="Upload sample photo"
-              onChange={(event) =>
-                handleFileChange(event.currentTarget.files?.[0] ?? null)
-              }
-              onInput={(event) =>
-                handleFileChange(event.currentTarget.files?.[0] ?? null)
-              }
-              style={{
-                position: "absolute",
-                width: 1,
-                height: 1,
-                opacity: 0,
-                pointerEvents: "none",
-              }}
-            />
-            <Button color="cta" onClick={() => fileInputRef.current?.click()}>
-              Upload sample photo
-            </Button>
-          </Group>
-        </SimpleGrid>
 
-        <CameraCapture onCapture={handleFileChange} />
-
-        {error ? (
-          <Alert color="danger" variant="light">
-            {error}
-          </Alert>
-        ) : null}
-
-        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-          <Paper withBorder p="md" radius="md" style={neutralPanelStyle}>
-            {imageUrl ? (
-              <MantineImage
-                src={imageUrl}
-                alt="Uploaded QC sample"
-                fit="contain"
-                mah={360}
-                onLoad={handleImageLoad}
-                data-testid="qc-preview"
-              />
-            ) : (
-              <Text c="dimmed" size="sm">
-                Upload a sample image to measure the center ROI.
-              </Text>
-            )}
-          </Paper>
-
-          <Stack gap="md">
-            <Paper withBorder p="md" radius="md">
-              <Stack gap="sm">
-                <Text fw={600}>Reference vs measured</Text>
-                <Group>
-                  <ColorSwatch
-                    color={
-                      product.rgbApprox
-                        ? getRgbCss(product.rgbApprox)
-                        : "var(--ds-border-color)"
-                    }
-                    size={42}
-                    data-testid="reference-swatch"
-                  />
-                  <Text size="sm">{product.name}</Text>
-                  {sessionReference ? (
-                    <Badge color="primary" variant="outline">
-                      session calibrated
-                    </Badge>
-                  ) : null}
-                </Group>
-                <Group>
-                  <ColorSwatch
-                    color={measuredRgb ? getRgbCss(measuredRgb) : "var(--ds-gray-300)"}
-                    size={42}
-                    data-testid="measured-swatch"
-                  />
-                  <Text size="sm">
-                    {measuredRgb
-                      ? `Measured ${getRgbCss(measuredRgb)}`
-                      : "No sample measured"}
-                  </Text>
-                </Group>
-              </Stack>
-            </Paper>
-
-            <Paper
-              withBorder
-              p="md"
-              radius="md"
-              style={evaluation ? statusPanelStyle(evaluation.status) : neutralPanelStyle}
-            >
-              <Stack gap="xs">
-                <Text fw={600}>Color result</Text>
-                {evaluation && measuredLab ? (
-                  <>
-                    <Group gap="xs">
-                      <Text size="sm">Color lane</Text>
-                      <Badge
-                        color={statusColor(evaluation.status)}
-                        variant="outline"
-                        data-testid="color-status"
-                      >
-                        {evaluation.status}
-                      </Badge>
-                    </Group>
-                    <Text data-testid="qc-delta-e">
-                      {"\u0394E"} {evaluation.deltaE.toFixed(2)}
-                    </Text>
-                    {evaluation.warningFlag ? (
-                      <Badge color="warning" variant="outline" data-testid="warning-flag">
-                        warning band
-                      </Badge>
-                    ) : null}
-                    <Text size="sm" c="dimmed">
-                      {formatLab(measuredLab)}
-                    </Text>
-                    <Group gap="xs">
-                      <Button
-                        size="xs"
-                        variant="light"
-                        color="primary"
-                        onClick={() => setSessionReference(measuredLab)}
-                      >
-                        Use as session reference
-                      </Button>
-                      {sessionReference ? (
-                        <Button
-                          size="xs"
-                          variant="subtle"
-                          color="primary"
-                          onClick={() => setSessionReference(null)}
-                        >
-                          Reset reference
-                        </Button>
-                      ) : null}
-                    </Group>
-                    {evaluation.channelFlags.length > 0 ? (
-                      <List size="sm" spacing="xs">
-                        {evaluation.channelFlags.map((flag) => (
-                          <List.Item key={flag.channel}>
-                            {flag.channel} {flag.direction}:{" "}
-                            {flag.value.toFixed(2)} vs{" "}
-                            {flag.reference.toFixed(2)} {"\u00b1"}{" "}
-                            {flag.tolerance}
-                          </List.Item>
-                        ))}
-                      </List>
-                    ) : (
-                      <Text size="sm">No channel flags.</Text>
-                    )}
-                  </>
-                ) : (
-                  <Text c="dimmed" size="sm">
-                    Delta E and verdict appear after image load.
-                  </Text>
-                )}
-              </Stack>
-            </Paper>
-
-            <Paper
-              withBorder
-              p="md"
-              radius="md"
-              style={
-                sampleAnalysis
-                  ? statusPanelStyle(
-                      sampleAnalysis.contamination.status === "reject" ||
-                        sampleAnalysis.consistency.status === "reject"
-                        ? "reject"
-                        : "pass"
-                    )
-                  : neutralPanelStyle
-              }
-            >
-              <Stack gap="xs">
-                <Text fw={600}>Powder and contamination checks</Text>
-                {sampleAnalysis ? (
-                  <>
-                    <Group gap="xs">
-                      <Text size="sm">Contamination lane</Text>
-                      <Badge
-                        color={statusColor(sampleAnalysis.contamination.status)}
-                        variant="outline"
-                        data-testid="contamination-status"
-                      >
-                        {sampleAnalysis.contamination.status}
-                      </Badge>
-                    </Group>
-                    <Text size="sm" data-testid="powder-pixel-count">
-                      Powder pixels: {sampleAnalysis.metrics.powderPixels} /{" "}
-                      {sampleAnalysis.metrics.totalOpaquePixels}
-                    </Text>
-                    <Text size="sm" data-testid="contaminant-ratio">
-                      Contaminant ratio:{" "}
-                      {(sampleAnalysis.metrics.contaminantRatio * 100).toFixed(
-                        2
-                      )}
-                      %
-                    </Text>
-                    <Text size="sm">
-                      Background/tray pixels excluded:{" "}
-                      {sampleAnalysis.metrics.backgroundPixels}
-                    </Text>
-                    <Group gap="xs">
-                      <Text size="sm">Consistency lane</Text>
-                      <Badge
-                        color={statusColor(sampleAnalysis.consistency.status)}
-                        variant="outline"
-                        data-testid="consistency-status"
-                      >
-                        {sampleAnalysis.consistency.status}
-                      </Badge>
-                    </Group>
-                    <Text size="sm" data-testid="texture-stddev">
-                      Texture brightness std dev:{" "}
-                      {sampleAnalysis.metrics.brightnessStdDev.toFixed(2)}
-                    </Text>
-                    <Text size="sm" data-testid="texture-contrast">
-                      Texture local contrast:{" "}
-                      {sampleAnalysis.metrics.textureContrast.toFixed(2)}
-                    </Text>
-                    {sampleAnalysis.metrics.lightingWarnings.length > 0 ? (
-                      <List size="sm" spacing="xs">
-                        {sampleAnalysis.metrics.lightingWarnings.map(
-                          (warning) => (
-                            <List.Item key={warning}>{warning}</List.Item>
-                          )
-                        )}
-                      </List>
-                    ) : (
-                      <Text size="sm">Lighting guard: no warning.</Text>
-                    )}
-                  </>
-                ) : (
-                  <Text c="dimmed" size="sm">
-                    Powder mask and contamination checks appear after image load.
-                  </Text>
-                )}
-              </Stack>
-            </Paper>
-          </Stack>
-        </SimpleGrid>
-
-        {persist ? (
-          <Paper withBorder p="md" radius="md" style={neutralPanelStyle}>
+          {persist ? (
             <Stack gap="sm">
-              <Group justify="space-between" align="center">
-                <Box>
-                  <Text fw={600}>Save QC lot</Text>
-                  <Text size="xs" c="dimmed">
-                    {"ΔE"} and the verdict are recomputed from the photo on
-                    the server, then stored as an immutable lot.
-                  </Text>
-                </Box>
-                <Button
-                  onClick={handleSaveLot}
-                  loading={saving}
-                  disabled={!selectedFile || !measuredLab}
-                  data-testid="save-lot"
-                  color="cta"
-                >
-                  Save QC lot
-                </Button>
-              </Group>
+              <Button
+                onClick={handleSaveLot}
+                loading={saving}
+                disabled={!selectedFile || !measuredLab}
+                data-testid="save-lot"
+                color="cta"
+                fullWidth
+              >
+                Save Record &amp; Next Lot
+              </Button>
               {saveError ? (
                 <Alert color="danger" variant="light" data-testid="save-error">
                   {saveError}
@@ -645,7 +710,7 @@ export function ColorQcCapture({
                 >
                   <Stack gap="var(--ds-spacing-1)">
                     <Group gap="xs">
-                      <Text fw={600}>Saved — server verdict:</Text>
+                      <Text fw={600}>Saved {"—"} server verdict:</Text>
                       <Badge
                         color={statusColor(savedLot.status)}
                         variant="outline"
@@ -672,9 +737,7 @@ export function ColorQcCapture({
                           variant="light"
                           color="primary"
                           data-testid="view-saved-lot"
-                          onClick={() =>
-                            router.push(`/qc/lots/${savedLot.lotId}`)
-                          }
+                          onClick={() => router.push(`/qc/lots/${savedLot.lotId}`)}
                         >
                           View lot
                         </Button>
@@ -694,11 +757,11 @@ export function ColorQcCapture({
                 </Alert>
               ) : null}
             </Stack>
-          </Paper>
-        ) : null}
+          ) : null}
+        </Stack>
+      </Card>
 
-        <canvas ref={canvasRef} hidden aria-hidden="true" />
-      </Stack>
-    </Card>
+      <canvas ref={canvasRef} hidden aria-hidden="true" />
+    </SimpleGrid>
   );
 }
