@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "daas:setup": "node scripts/setup-daas-rbac.mjs",
     "daas:readiness": "node scripts/check-daas-readiness.mjs"
   },
   "dependencies": {

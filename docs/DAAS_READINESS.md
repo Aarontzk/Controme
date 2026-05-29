@@ -3,6 +3,29 @@
 Use these checks before deployment or demo recording. They verify the backend fields and demo data
 that the current Controme backend code expects.
 
+## One-time / per-instance setup (`pnpm daas:setup`)
+
+Some DaaS runtime config lives server-side (not in the repo) and must exist on every instance the
+app talks to. Instead of applying it by hand via MCP, run the idempotent bootstrap:
+
+```bash
+pnpm daas:setup
+```
+
+It reads `.env.local` (`NEXT_PUBLIC_BUILDPAD_DAAS_URL` + `DAAS_STATIC_TOKEN`) and ensures, additively
+(never removing existing config):
+
+- **CORS** origins include the local dev + Playwright E2E ports
+  (`http://localhost:3000`, `http://127.0.0.1:3000`, `http://localhost:3100`, `http://127.0.0.1:3100`)
+  with credentials enabled — unioned with whatever is already set (e.g. the Amplify URL).
+- **`daas_files` permissions** required by the authenticated QC flow. Policies are resolved
+  dynamically from existing `qc_lots` permissions (no hard-coded UUIDs): every policy that can
+  *create* `qc_lots` (operators) gets `create`+`read`+`update` on `daas_files`; every policy that
+  can *read* `qc_lots` (operators, PPIC, manager) gets `read`. Without these, `POST /api/qc/lots`
+  fails with "Photo upload failed." and lot-detail photos 401.
+
+Re-running is safe — it prints what (if anything) it changed and creates nothing that already exists.
+
 ## Required DaaS Fields
 
 The code writes these fields during QC capture and reference updates:
