@@ -132,3 +132,13 @@ export function getMenuForRoles(userRoles: readonly AppRole[]): AppMenuItem[] {
     (a, b) => a.order - b.order
   );
 }
+
+/**
+ * The page a freshly-logged-in user should land on, based on their roles. We
+ * reuse the role-scoped menu and take its first (lowest-order) item, so the
+ * landing always matches what the sidebar shows: operators land on capture,
+ * PPIC/manager on their dashboard, etc. Returns null when no menu is available.
+ */
+export function getLandingHref(userRoles: readonly AppRole[]): string | null {
+  return getMenuForRoles(userRoles)[0]?.href ?? null;
+}

@@ -1,25 +1,39 @@
 "use client";
 
-import { Button, Group, Stack, Text, Title } from "@mantine/core";
-import { ColorSchemeToggle } from "@/components/ColorSchemeToggle";
+import { Center, Loader, Stack, Text } from "@mantine/core";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
+import { getLandingHref } from "@/lib/auth/role-gating";
+import { useAppRoles } from "@/lib/auth/useAppRoles";
+
+/**
+ * Root entry point. Sends the user straight to where they work instead of a
+ * dead starter page: unauthenticated → /login, otherwise the first page their
+ * role grants (operators → capture, PPIC/manager → dashboard, admin → capture).
+ * This keeps the whole app reachable by clicking — no manual URL typing.
+ */
 export default function HomePage() {
+  const router = useRouter();
+  const { roles, loading } = useAppRoles();
+
+  useEffect(() => {
+    if (loading) return;
+    if (roles.length === 0) {
+      router.replace("/login");
+      return;
+    }
+    router.replace(getLandingHref(roles) ?? "/login");
+  }, [loading, roles, router]);
+
   return (
-    <Stack gap="lg" p="xl">
-      <Group justify="space-between">
-        <Title order={2}>Buildpad Starter</Title>
-        <ColorSchemeToggle />
-      </Group>
-      <Text c="dimmed">
-        This starter uses token-based theming with Mantine and is ready to
-        consume Buildpad UI components.
-      </Text>
-      <Group>
-        <Button>Primary Action</Button>
-        <Button variant="light" color="secondary">
-          Secondary Action
-        </Button>
-      </Group>
-    </Stack>
+    <Center mih="100dvh">
+      <Stack align="center" gap="sm">
+        <Loader />
+        <Text c="dimmed" size="sm">
+          Loading your workspace…
+        </Text>
+      </Stack>
+    </Center>
   );
 }

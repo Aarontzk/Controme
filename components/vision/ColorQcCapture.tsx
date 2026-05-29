@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SyntheticEvent } from "react";
+import { useRouter } from "next/navigation";
 import {
   Alert,
   Badge,
@@ -64,6 +65,7 @@ export function ColorQcCapture({
   products = REFERENCE_PRODUCTS,
   persist = false,
 }: ColorQcCaptureProps) {
+  const router = useRouter();
   const firstProduct = products[0] ?? REFERENCE_PRODUCTS[0];
   const [selectedProductId, setSelectedProductId] = useState(firstProduct.id);
   const [qcStage, setQcStage] = useState<"incoming" | "finish">("incoming");
@@ -616,9 +618,21 @@ export function ColorQcCapture({
                       </Text>
                     </Group>
                     {savedLot.lotId ? (
-                      <Text size="xs" c="dimmed">
-                        Lot {savedLot.lotId}
-                      </Text>
+                      <Group gap="xs" align="center">
+                        <Text size="xs" c="dimmed">
+                          Lot {savedLot.lotId}
+                        </Text>
+                        <Button
+                          size="xs"
+                          variant="light"
+                          data-testid="view-saved-lot"
+                          onClick={() =>
+                            router.push(`/qc/lots/${savedLot.lotId}`)
+                          }
+                        >
+                          View lot
+                        </Button>
+                      </Group>
                     ) : null}
                     {savedLot.failedLanes.length > 0 ? (
                       <Text size="sm">

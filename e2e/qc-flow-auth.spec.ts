@@ -27,6 +27,10 @@ function credsFor(role: Role): { email: string; password: string } | null {
 async function login(page: Page, role: Role): Promise<void> {
   const creds = credsFor(role);
   if (!creds) throw new Error(`Missing E2E_${role}_EMAIL / E2E_${role}_PASSWORD`);
+  // Visit the login screen first: realistic entry point and it warms the dev
+  // server so the on-demand-compiled /api/auth/login route is ready (avoids a
+  // turbopack cold-compile 404 on the very first request).
+  await page.goto("/login");
   const response = await page.request.post("/api/auth/login", {
     data: creds,
     headers: { "Content-Type": "application/json" },
@@ -42,7 +46,9 @@ test.describe("authenticated QC flow", () => {
     test.skip(!credsFor("OPERATOR"), "E2E_OPERATOR_* not configured");
     await login(page, "OPERATOR");
 
-    await page.goto("/qc/capture");
+    // Smooth path: root redirects an operator straight to capture — no manual URLs.
+    await page.goto("/");
+    await page.waitForURL("**/qc/capture");
     await expect(page.getByRole("heading", { name: "QC Capture", level: 1 })).toBeVisible();
 
     // No-products alert means seed/permissions are wrong — fail loudly.
@@ -74,10 +80,11 @@ test.describe("authenticated QC flow", () => {
     await expect(page.getByTestId("saved-lot")).toBeVisible();
     await expect(page.getByTestId("saved-status")).toHaveText(/pass|reject/);
 
-    // Persistence: the immutable record is readable on its detail page, and
-    // export is hidden from the operator (RBAC: admin/manager only).
-    await page.goto(`/qc/lots/${lotId}`);
+    // Smooth path: the result card links straight to the persisted lot.
+    await page.getByTestId("view-saved-lot").click();
+    await page.waitForURL(`**/qc/lots/${lotId}`);
     await expect(page.getByRole("heading", { name: "QC Lot Detail", level: 1 })).toBeVisible();
+    // Export is hidden from the operator (RBAC: admin/manager only).
     await expect(page.getByRole("button", { name: "Export CSV" })).toHaveCount(0);
   });
 
@@ -85,7 +92,9 @@ test.describe("authenticated QC flow", () => {
     test.skip(!credsFor("MANAGER"), "E2E_MANAGER_* not configured");
     await login(page, "MANAGER");
 
-    await page.goto("/qc/lots");
+    // Smooth path: root redirects a manager to their dashboard.
+    await page.goto("/");
+    await page.waitForURL("**/dashboard/manager");
 
     // Sidebar RBAC: manager scope shows dashboards + history, never capture.
     await expect(page.getByText("Manager Dashboard", { exact: true })).toBeVisible({
@@ -93,14 +102,15 @@ test.describe("authenticated QC flow", () => {
     });
     await expect(page.getByText("QC Capture", { exact: true })).toHaveCount(0);
 
-    // Manager can read a lot and export it.
-    const lotsResponse = await page.request.get("/api/items/qc_lots?limit=1");
-    expect(lotsResponse.ok(), `lots fetch failed: ${lotsResponse.status()}`).toBeTruthy();
-    const lots = (await lotsResponse.json()) as { data?: Array<{ id?: string }> };
-    const lotId = lots.data?.[0]?.id;
-    test.skip(!lotId, "no seeded lots to export");
+    // Navigate to lot history by clicking the sidebar (no manual URLs).
+    await page.getByText("QC Lot History", { exact: true }).click();
+    await page.waitForURL("**/qc/lots");
 
-    await page.goto(`/qc/lots/${lotId}`);
+    // Open a lot by clicking its row, then export it (manager-only action).
+    const firstRow = page.locator("table tbody tr").first();
+    await expect(firstRow).toBeVisible({ timeout: 20_000 });
+    await firstRow.click();
+    await page.waitForURL(/\/qc\/lots\/[^/]+$/);
     await expect(page.getByRole("button", { name: "Export CSV" })).toBeVisible({
       timeout: 20_000,
     });
