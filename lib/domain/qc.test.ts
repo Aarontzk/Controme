@@ -72,14 +72,27 @@ describe("evaluateSample", () => {
     expect(result.status).toBe("pass");
     expect(result.channelFlags.map((f) => f.channel)).toEqual(["a"]);
   });
+
+  it("marks pass results inside the warning band", () => {
+    const result = evaluateSample(DRAGON_FRUIT_POWDER, {
+      L: DRAGON_FRUIT_POWDER.reference.L + 4.1,
+      a: DRAGON_FRUIT_POWDER.reference.a,
+      b: DRAGON_FRUIT_POWDER.reference.b,
+    });
+    expect(result.status).toBe("pass");
+    expect(result.warningFlag).toBe(true);
+    expect(isWarningBand(DRAGON_FRUIT_POWDER, 4.05)).toBe(false);
+    expect(isWarningBand(DRAGON_FRUIT_POWDER, 4.06)).toBe(true);
+    expect(isWarningBand(DRAGON_FRUIT_POWDER, 4.51)).toBe(false);
+  });
 });
 
 describe("isWarningBand", () => {
   it("is true only for passing lots above 90 percent of the threshold", () => {
-    expect(isWarningBand(4.51, 5)).toBe(true);
-    expect(isWarningBand(5, 5)).toBe(true);
-    expect(isWarningBand(4.5, 5)).toBe(false);
-    expect(isWarningBand(5.01, 5)).toBe(false);
+    expect(isWarningBand(GINGER_POWDER, 4.51)).toBe(true);
+    expect(isWarningBand(GINGER_POWDER, 5)).toBe(true);
+    expect(isWarningBand(GINGER_POWDER, 4.5)).toBe(false);
+    expect(isWarningBand(GINGER_POWDER, 5.01)).toBe(false);
   });
 });
 

@@ -37,9 +37,11 @@ export async function POST(request: NextRequest) {
     const form = await request.formData();
     const productId = String(form.get("productId") ?? "");
     const qcStage = String(form.get("qcStage") ?? "incoming");
+    const lotCode = String(form.get("lotCode") ?? "").trim();
+    const note = String(form.get("note") ?? "").trim();
     const photo = form.get("photo");
 
-    const parsed = qcLotUploadSchema.safeParse({ productId, qcStage });
+    const parsed = qcLotUploadSchema.safeParse({ productId, qcStage, lotCode, note });
     if (!parsed.success) {
       return jsonError(parsed.error.issues[0]?.message ?? "Invalid productId.", 400);
     }
@@ -104,16 +106,15 @@ export async function POST(request: NextRequest) {
       operatorId = meJson.data?.id ?? null;
     }
 
-    const lotBody = {
+    // Core fields the live DaaS schema is guaranteed to accept — used as the fallback body
+    // if the extended fields below are not yet present on the collection.
+    const baseLotBody = {
       product_id: parsed.data.productId,
       l_value: round(sample.lab.L),
       a_value: round(sample.lab.a),
       b_value: round(sample.lab.b),
       delta_e: evaluation.deltaE,
       status: finalStatus,
-      warning_flag: finalStatus === "pass" && evaluation.warningFlag,
-      qc_stage: parsed.data.qcStage,
-      reference_version: referenceVersion,
       channel_flags: evaluation.channelFlags,
       contaminant_ratio: round(sample.analysis.metrics.contaminantRatio, 4),
       brightness_stddev: round(sample.analysis.metrics.brightnessStdDev),
@@ -123,13 +124,29 @@ export async function POST(request: NextRequest) {
       operator_id: operatorId,
       checked_at: new Date().toISOString(),
     };
+    const lotBody = {
+      ...baseLotBody,
+      qc_stage: parsed.data.qcStage,
+      warning_flag: evaluation.warningFlag,
+      reference_version: referenceVersion,
+      note: parsed.data.note || null,
+      lot_code: parsed.data.lotCode || null,
+    };
 
-    const lotRes = await fetch(`${daasUrl}/api/items/qc_lots`, {
+    let lotRes = await fetch(`${daasUrl}/api/items/qc_lots`, {
       method: "POST",
       headers,
       body: JSON.stringify(lotBody),
       cache: "no-store",
     });
+    if (!lotRes.ok && [400, 422].includes(lotRes.status)) {
+      lotRes = await fetch(`${daasUrl}/api/items/qc_lots`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(baseLotBody),
+        cache: "no-store",
+      });
+    }
     if (!lotRes.ok) {
       const detail = await lotRes.text();
       return jsonError(`Failed to save lot: ${detail.slice(0, 200)}`, lotRes.status);
@@ -143,7 +160,6 @@ export async function POST(request: NextRequest) {
         result: {
           status: finalStatus,
           deltaE: evaluation.deltaE,
-          warningFlag: finalStatus === "pass" && evaluation.warningFlag,
           qcStage: parsed.data.qcStage,
           referenceVersion,
           lab: {
@@ -152,6 +168,7 @@ export async function POST(request: NextRequest) {
             b: round(sample.lab.b),
           },
           channelFlags: evaluation.channelFlags,
+          warningFlag: evaluation.warningFlag,
           failedLanes,
           lightingWarnings: sample.analysis.metrics.lightingWarnings,
         },

@@ -27,10 +27,15 @@
  */
 
 import { DaaSProviderWrapper } from "@/components/DaaSProviderWrapper";
+import { AuthenticatedAppShell } from "./AuthenticatedAppShell";
 import type { ReactNode } from "react";
 
 export default function AuthenticatedLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
-  return <DaaSProviderWrapper>{children}</DaaSProviderWrapper>;
+  return (
+    <DaaSProviderWrapper>
+      <AuthenticatedAppShell>{children}</AuthenticatedAppShell>
+    </DaaSProviderWrapper>
+  );
 }

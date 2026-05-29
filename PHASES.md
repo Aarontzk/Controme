@@ -64,13 +64,18 @@ App = **Controme** (CV colour QC for Sima Arome). Domain locked from the PRD. Da
 
 - [x] Auth-gated QC capture at `/qc/capture` (Buildpad-first; products fetched from DaaS)
 - [x] Immutable lot history at `/qc/lots` via `CollectionList`
-- [ ] Product management UI (CollectionForm) + navigation/shell — pending
+- [x] App shell + role-scoped navigation for `qc_operator`, `ppic`, `manager`, and `admin`
+- [x] Product management UI via `CollectionList` + `CollectionForm`
+- [x] Lot detail view with immutable read-only diagnostics
 
 ## Phase 3 — Business Logic 🟡
 
 - [x] Server-authoritative QC: `/api/qc/lots` recomputes ΔE + contamination + consistency from
       the photo (sharp, EXIF, white balance) — client preview is advisory only
 - [x] Immutable lot persistence + photo upload to DaaS Files; built-in `daas_activity` audit
-- [ ] Reference versioning workflow (`product_reference_versions`) + PPIC/manager dashboards
+- [x] Capture metadata fields: `qc_stage`, `lot_code`, `note`, warning band surfacing
+- [x] PPIC/manager dashboards with clearance summary, pass rate, Delta E trend, rejects/warnings
+- [x] Reference version history view + CSV/PDF lot export
+- [ ] Backend trigger for `product_reference_versions` on product edits (Farel dependency)
 
 ## Phases 4–5 — see copilot-instructions.md / create-project for deliverables
