@@ -29,6 +29,7 @@ import {
   Box,
   Button,
   Container,
+  Divider,
   Paper,
   Stack,
   Text,
@@ -39,6 +40,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import darkLogo from "@/assets/dark logo.png";
 import { Input } from "@/components/ui";
+import { SelectDropdown } from "@/components/ui/select-dropdown";
+import { DEMO_ACCOUNTS, DEMO_LOGIN_ENABLED } from "@/lib/auth/demo-accounts";
 
 interface LoginValues {
   email: string;
@@ -163,6 +166,39 @@ export default function LoginPage() {
             padding: "var(--ds-spacing-8)"
           }}
         >
+          {DEMO_LOGIN_ENABLED ? (
+            <Stack gap="var(--ds-spacing-2)" mb="var(--ds-spacing-4)">
+              <SelectDropdown
+                label="Demo quick login"
+                placeholder="Pick a role to sign in"
+                choices={DEMO_ACCOUNTS.map((account) => ({
+                  value: account.id,
+                  text: account.label
+                }))}
+                value={null}
+                allowNone={false}
+                onChange={(value) => {
+                  const account = DEMO_ACCOUNTS.find((item) => item.id === value);
+                  if (!account || loading) return;
+                  setErrors({});
+                  setValues({ email: account.email, password: account.password });
+                  void handleLogin({
+                    email: account.email,
+                    password: account.password
+                  });
+                }}
+              />
+              <Text size="xs" c="var(--ds-text-muted)">
+                Demo accounts — fills credentials and signs in automatically.
+              </Text>
+              <Divider
+                label="or sign in manually"
+                labelPosition="center"
+                mt="var(--ds-spacing-1)"
+              />
+            </Stack>
+          ) : null}
+
           <form onSubmit={handleSubmit}>
             <Stack gap="var(--ds-spacing-4)">
               <Input
