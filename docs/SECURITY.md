@@ -34,9 +34,12 @@ build a custom audit table in the Next.js app.
 QC lot records should also be treated as write-once application records:
 
 - create and read allowed for authorized roles,
-- no update/delete UI for submitted lot checks,
+- generic `/api/items/qc_lots` proxy writes are rejected by the Next.js backend,
 - corrections create a new QC lot record,
-- product reference changes go to `product_reference_versions`.
+- product reference changes go through the admin update route and append to
+  `product_reference_versions`,
+- generic proxy writes to `product_reference_versions` are rejected so reference
+  history stays append-only.
 
 ## Secrets
 

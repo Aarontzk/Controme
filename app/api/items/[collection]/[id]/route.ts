@@ -23,6 +23,10 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { getAuthHeaders, getDaaSUrl } from '@/lib/api/auth-headers';
+import {
+  immutableCollectionMessage,
+  shouldBlockCollectionProxyMutation,
+} from '@/lib/domain/collection-guards';
 
 type Params = { params: Promise<{ collection: string; id: string }> };
 
@@ -32,6 +36,13 @@ async function proxyRequest(
   id: string,
   method: string
 ) {
+  if (shouldBlockCollectionProxyMutation(collection, method)) {
+    return NextResponse.json(
+      { errors: [{ message: immutableCollectionMessage(collection) }] },
+      { status: 405 }
+    );
+  }
+
   const daasUrl = getDaaSUrl();
   const headers = await getAuthHeaders();
   const searchParams = request.nextUrl.searchParams.toString();
