@@ -19,6 +19,7 @@ export interface DaasProductRow {
   tol_a: number;
   tol_b: number;
   delta_e_max: number;
+  version?: number | null;
   rgb_approx?: string | null;
   active?: boolean;
 }

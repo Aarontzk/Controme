@@ -45,6 +45,9 @@ Field names below match the live DaaS collection.
 | `b_value` | float | measured b\* |
 | `delta_e` | float | computed ΔE vs reference |
 | `status` | enum | final `pass` / `reject` (indexed) — reject if any lane fails |
+| `warning_flag` | boolean | true when passing Delta E is >90% and <=100% of `delta_e_max` |
+| `qc_stage` | enum | `incoming` / `finish` traceability stage |
+| `reference_version` | integer | product reference version used for this measurement |
 | `channel_flags` | json | channels outside tolerance (explanatory) |
 | `contaminant_ratio` | float | foreign-object pixel ratio in ROI (contamination lane) |
 | `brightness_stddev` | float | powder brightness std dev (consistency lane) |

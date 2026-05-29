@@ -1,7 +1,7 @@
 /**
  * Authoritative QC lot creation.
  *
- * POST /api/qc/lots  (multipart: photo, productId)
+ * POST /api/qc/lots  (multipart: photo, productId, qcStage)
  *   1. Auth required (operator's Supabase JWT, forwarded to DaaS).
  *   2. ΔE + contamination + consistency are recomputed server-side from the uploaded photo —
  *      the browser preview is advisory and is never trusted for the stored verdict.
@@ -36,9 +36,10 @@ export async function POST(request: NextRequest) {
 
     const form = await request.formData();
     const productId = String(form.get("productId") ?? "");
+    const qcStage = String(form.get("qcStage") ?? "incoming");
     const photo = form.get("photo");
 
-    const parsed = qcLotUploadSchema.safeParse({ productId });
+    const parsed = qcLotUploadSchema.safeParse({ productId, qcStage });
     if (!parsed.success) {
       return jsonError(parsed.error.issues[0]?.message ?? "Invalid productId.", 400);
     }
@@ -66,6 +67,8 @@ export async function POST(request: NextRequest) {
       return jsonError("Product not found.", 404);
     }
     const product = mapDaasProduct(productJson.data);
+    const referenceVersion =
+      typeof productJson.data.version === "number" ? productJson.data.version : 1;
 
     // Server-authoritative recompute from the photo bytes.
     const buffer = Buffer.from(await photo.arrayBuffer());
@@ -108,6 +111,9 @@ export async function POST(request: NextRequest) {
       b_value: round(sample.lab.b),
       delta_e: evaluation.deltaE,
       status: finalStatus,
+      warning_flag: finalStatus === "pass" && evaluation.warningFlag,
+      qc_stage: parsed.data.qcStage,
+      reference_version: referenceVersion,
       channel_flags: evaluation.channelFlags,
       contaminant_ratio: round(sample.analysis.metrics.contaminantRatio, 4),
       brightness_stddev: round(sample.analysis.metrics.brightnessStdDev),
@@ -137,6 +143,9 @@ export async function POST(request: NextRequest) {
         result: {
           status: finalStatus,
           deltaE: evaluation.deltaE,
+          warningFlag: finalStatus === "pass" && evaluation.warningFlag,
+          qcStage: parsed.data.qcStage,
+          referenceVersion,
           lab: {
             L: round(sample.lab.L),
             a: round(sample.lab.a),

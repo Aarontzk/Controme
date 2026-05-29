@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { deltaE76 } from "./colorimetry";
-import { buildQCLot, evaluateSample } from "./qc";
+import { buildQCLot, evaluateSample, isWarningBand } from "./qc";
 import { DRAGON_FRUIT_POWDER, GINGER_POWDER } from "./reference-products";
 
 describe("deltaE76", () => {
@@ -23,6 +23,7 @@ describe("evaluateSample", () => {
     const result = evaluateSample(GINGER_POWDER, GINGER_POWDER.reference);
     expect(result.deltaE).toBe(0);
     expect(result.status).toBe("pass");
+    expect(result.warningFlag).toBe(false);
     expect(result.channelFlags).toHaveLength(0);
   });
 
@@ -30,6 +31,7 @@ describe("evaluateSample", () => {
     const result = evaluateSample(GINGER_POWDER, { L: 70, a: 10, b: 38 });
     expect(result.status).toBe("pass");
     expect(result.deltaE).toBeLessThanOrEqual(GINGER_POWDER.deltaEMax);
+    expect(result.warningFlag).toBe(false);
     expect(result.channelFlags).toHaveLength(0);
   });
 
@@ -40,6 +42,7 @@ describe("evaluateSample", () => {
       b: GINGER_POWDER.reference.b,
     });
     expect(result.status).toBe("reject");
+    expect(result.warningFlag).toBe(false);
     expect(result.channelFlags).toEqual([
       {
         channel: "L",
@@ -68,6 +71,15 @@ describe("evaluateSample", () => {
     });
     expect(result.status).toBe("pass");
     expect(result.channelFlags.map((f) => f.channel)).toEqual(["a"]);
+  });
+});
+
+describe("isWarningBand", () => {
+  it("is true only for passing lots above 90 percent of the threshold", () => {
+    expect(isWarningBand(4.51, 5)).toBe(true);
+    expect(isWarningBand(5, 5)).toBe(true);
+    expect(isWarningBand(4.5, 5)).toBe(false);
+    expect(isWarningBand(5.01, 5)).toBe(false);
   });
 });
 

@@ -47,6 +47,8 @@ export interface ChannelFlag {
 export interface QCEvaluation {
   deltaE: number;
   status: QCStatus;
+  /** True when a passing lot is close to the reject threshold. */
+  warningFlag: boolean;
   /** Channels outside tolerance — the human-readable "why", independent of the ΔE verdict. */
   channelFlags: ChannelFlag[];
 }
@@ -93,7 +95,12 @@ export function evaluateSample(product: ProductReference, measured: LabColor): Q
   }
 
   const status: QCStatus = deltaE > product.deltaEMax ? "reject" : "pass";
-  return { deltaE, status, channelFlags };
+  return { deltaE, status, warningFlag: isWarningBand(deltaE, product.deltaEMax), channelFlags };
+}
+
+/** Warning band: Delta E still passes, but is above 90% of the product threshold. */
+export function isWarningBand(deltaE: number, deltaEMax: number): boolean {
+  return deltaE > 0.9 * deltaEMax && deltaE <= deltaEMax;
 }
 
 /**

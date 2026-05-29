@@ -21,6 +21,11 @@
 - Added unit tests for white balance, upload validation, product mapping, the
   contamination blob lane, and a sharp end-to-end pipeline test; renamed product
   references to Controme.
+- Added backend hardening for `warning_flag`, `qc_stage`, and `reference_version`
+  persistence; added CSV COA export, product reference versioning update route,
+  and `/api/health`.
+- Added DaaS readiness endpoints and docs so the team can verify live schema fields and
+  demo seed coverage before Amplify deployment.
 
 ## 2026-05-28
 

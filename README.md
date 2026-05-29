@@ -49,6 +49,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design + ADRs |
 | [docs/SECURITY.md](docs/SECURITY.md) | RBAC, audit trail, encryption |
 | [docs/SETUP.md](docs/SETUP.md) | Dev environment setup |
+| [docs/DAAS_READINESS.md](docs/DAAS_READINESS.md) | Live DaaS schema + demo seed verification |
 | [docs/VISION_POC.md](docs/VISION_POC.md) | Day 1 browser-only color QC PoC |
 | [docs/CHANGELOG.md](docs/CHANGELOG.md) | Implementation change history |
 
