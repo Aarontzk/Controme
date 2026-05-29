@@ -28,9 +28,8 @@ import { useState } from "react";
 import {
   Box,
   Button,
-  Container,
   Divider,
-  Paper,
+  Group,
   Stack,
   Text,
   Title
@@ -39,6 +38,8 @@ import { notifications } from "@mantine/notifications";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import darkLogo from "@/assets/dark logo.png";
+import lightLogo from "@/assets/light logo.png";
+import heroLogin from "@/assets/hero login.png";
 import { Input } from "@/components/ui";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { DEMO_ACCOUNTS, DEMO_LOGIN_ENABLED } from "@/lib/auth/demo-accounts";
@@ -130,44 +131,97 @@ export default function LoginPage() {
         position: "fixed",
         inset: 0,
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background:
-          "linear-gradient(180deg, var(--ds-surface-deep) 0%, var(--ds-surface-base) 58%, var(--ds-primary-muted) 100%)"
+        background: "var(--ds-surface-white)"
       }}
     >
-      <Container size={420} px="var(--ds-spacing-4)">
-        <Stack align="center" gap="var(--ds-spacing-3)" mb="var(--ds-spacing-6)">
-          <Image
-            src={darkLogo}
-            alt="Controme"
-            width={142}
-            priority
-            style={{
-              height: "auto",
-              width: "min(142px, 52vw)"
-            }}
-          />
-          <Title ta="center" order={1}>
-            Welcome back
-          </Title>
-          <Text c="var(--ds-text-muted)" size="sm" ta="center">
-            Sign in to your account
-          </Text>
-        </Stack>
-
-        <Paper
-          withBorder
-          shadow="lg"
-          radius="md"
+      {/* ── Left: lab hero with deep-green overlay (md and up) ── */}
+      <Box
+        visibleFrom="md"
+        style={{
+          position: "relative",
+          flex: "1 1 0",
+          overflow: "hidden"
+        }}
+      >
+        <Image
+          src={heroLogin}
+          alt="Controme QC laboratory"
+          fill
+          priority
+          sizes="50vw"
+          style={{ objectFit: "cover" }}
+        />
+        <Box
           style={{
-            background: "var(--ds-surface-white)",
-            borderColor: "var(--ds-border-color)",
-            padding: "var(--ds-spacing-8)"
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(160deg, rgba(0,72,56,0.92) 0%, rgba(0,77,62,0.82) 45%, rgba(0,48,38,0.78) 100%)"
+          }}
+        />
+        <Stack
+          justify="flex-end"
+          gap="var(--ds-spacing-4)"
+          style={{
+            position: "relative",
+            height: "100%",
+            padding: "var(--ds-spacing-12)"
           }}
         >
+          <Image
+            src={lightLogo}
+            alt="Controme"
+            width={196}
+            priority
+            style={{ height: "auto", width: "min(196px, 40%)" }}
+          />
+          <Title
+            order={2}
+            style={{ color: "#ffffff", maxWidth: "18ch", lineHeight: 1.15 }}
+          >
+            AI-Powered QC &amp; Operations Platform
+          </Title>
+          <Text
+            size="sm"
+            style={{ color: "rgba(255,255,255,0.82)", maxWidth: "44ch" }}
+          >
+            Objective consistency and automated audit trails for Sima Arome&apos;s
+            export quality standards.
+          </Text>
+        </Stack>
+      </Box>
+
+      {/* ── Right: sign-in form ── */}
+      <Box
+        style={{
+          flex: "1 1 0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "var(--ds-spacing-6)",
+          overflowY: "auto"
+        }}
+      >
+        <Box style={{ width: "100%", maxWidth: 400 }}>
+          <Box hiddenFrom="md" mb="var(--ds-spacing-6)">
+            <Image
+              src={darkLogo}
+              alt="Controme"
+              width={150}
+              priority
+              style={{ height: "auto", width: "150px" }}
+            />
+          </Box>
+
+          <Title order={1} style={{ color: "var(--ds-primary)" }}>
+            Log in to Controme
+          </Title>
+          <Text c="var(--ds-text-muted)" size="sm" mt="var(--ds-spacing-1)">
+            Please sign in to continue.
+          </Text>
+
           {DEMO_LOGIN_ENABLED ? (
-            <Stack gap="var(--ds-spacing-2)" mb="var(--ds-spacing-4)">
+            <Stack gap="var(--ds-spacing-2)" mt="var(--ds-spacing-6)">
               <SelectDropdown
                 label="Demo quick login"
                 placeholder="Pick a role to sign in"
@@ -197,12 +251,14 @@ export default function LoginPage() {
                 mt="var(--ds-spacing-1)"
               />
             </Stack>
-          ) : null}
+          ) : (
+            <Box mt="var(--ds-spacing-6)" />
+          )}
 
           <form onSubmit={handleSubmit}>
             <Stack gap="var(--ds-spacing-4)">
               <Input
-                label="Email"
+                label="Employee ID / Email"
                 placeholder="you@example.com"
                 required
                 value={values.email}
@@ -217,7 +273,7 @@ export default function LoginPage() {
 
               <Input
                 label="Password"
-                placeholder="Your password"
+                placeholder="Enter your password.."
                 required
                 masked
                 value={values.password}
@@ -230,13 +286,28 @@ export default function LoginPage() {
                 }
               />
 
-              <Button type="submit" fullWidth loading={loading} color="cta">
-                Sign in
+              <Button
+                type="submit"
+                fullWidth
+                loading={loading}
+                color="cta"
+                mt="var(--ds-spacing-2)"
+              >
+                Log In
               </Button>
             </Stack>
           </form>
-        </Paper>
-      </Container>
+
+          <Group justify="center" gap={6} mt="var(--ds-spacing-4)">
+            <Text size="sm" c="var(--ds-text-muted)">
+              Forgot Password?
+            </Text>
+            <Text size="sm" fw={700} style={{ color: "var(--ds-primary)" }}>
+              Contact Admin
+            </Text>
+          </Group>
+        </Box>
+      </Box>
     </Box>
   );
 }
