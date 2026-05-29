@@ -9,11 +9,12 @@
  */
 
 /**
- * Next.js Middleware
- * 
- * Root middleware file that handles auth session refresh.
+ * Next.js Proxy (formerly Middleware)
+ *
+ * Root proxy file that handles auth session refresh. Next 16 renamed the
+ * `middleware` file convention to `proxy`; the exported entry is now `proxy`.
  * This file is copied to your project by the Buildpad CLI.
- * 
+ *
  * @buildpad/origin: middleware
  * @buildpad/version: 1.0.0
  */
@@ -21,7 +22,7 @@
 import { type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
 

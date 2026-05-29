@@ -12,6 +12,7 @@ dist/
 build/
 out/
 .next/
+*.tsbuildinfo
 .nuxt/
 .cache/
 .parcel-cache/
