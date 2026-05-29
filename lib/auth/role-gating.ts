@@ -10,6 +10,13 @@ export type AppRole = (typeof APP_ROLES)[number];
 export interface RoleLike {
   id?: string | null;
   name?: string | null;
+  /**
+   * DaaS returns a user's roles as junction rows shaped like
+   * `{ id: <junction-id>, role_id: { id, name } | <role-id-string> }`.
+   * The human role name lives on `role_id`, not on the junction row, so we
+   * must look through it when resolving role names.
+   */
+  role_id?: string | { id?: string | null; name?: string | null } | null;
 }
 
 export interface UserRoleSource {
@@ -98,10 +105,16 @@ export function getRoleNames(user: UserRoleSource | null | undefined): AppRole[]
   }
 
   for (const role of user?.roles ?? []) {
-    const normalizedId = normalizeRoleName(role.id);
-    const normalizedName = normalizeRoleName(role.name);
-    if (normalizedId) roles.add(normalizedId);
-    if (normalizedName) roles.add(normalizedName);
+    const candidates = [role.id, role.name];
+    if (typeof role.role_id === "string") {
+      candidates.push(role.role_id);
+    } else if (role.role_id) {
+      candidates.push(role.role_id.id, role.role_id.name);
+    }
+    for (const candidate of candidates) {
+      const normalized = normalizeRoleName(candidate);
+      if (normalized) roles.add(normalized);
+    }
   }
 
   return [...roles];

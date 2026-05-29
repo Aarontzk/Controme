@@ -6,24 +6,13 @@ import { useMemo, type ReactNode } from "react";
 
 import { ContentLayout } from "@/components/ui/content-layout";
 import { AppRoleNavigation } from "@/components/navigation/AppRoleNavigation";
-import { useAuth, usePermissions } from "@/lib/buildpad/hooks";
-import { getMenuForRoles, getRoleNames } from "@/lib/auth/role-gating";
+import { getMenuForRoles } from "@/lib/auth/role-gating";
+import { useAppRoles } from "@/lib/auth/useAppRoles";
 
 export function AuthenticatedAppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const auth = useAuth();
-  const permissions = usePermissions({
-    collections: ["products", "qc_lots", "product_reference_versions"],
-  });
-
-  const userRoles = useMemo(() => {
-    const roles = getRoleNames({
-      ...auth.user,
-      admin_access: auth.isAdmin || permissions.isAdmin || auth.user?.admin_access,
-    });
-    return roles;
-  }, [auth.isAdmin, auth.user, permissions.isAdmin]);
+  const { roles: userRoles, loading } = useAppRoles();
 
   const menuItems = useMemo(() => getMenuForRoles(userRoles), [userRoles]);
   const currentItem = useMemo(
@@ -38,7 +27,7 @@ export function AuthenticatedAppShell({ children }: { children: ReactNode }) {
     <ContentLayout
       title={currentItem?.label ?? "Controme"}
       breadcrumbs={[{ label: "Controme", href: "/" }]}
-      loading={auth.loading || permissions.loading}
+      loading={loading}
       sidebar={
         <Stack gap="sm" p="sm">
           <Box px="xs" py="sm">
@@ -51,7 +40,7 @@ export function AuthenticatedAppShell({ children }: { children: ReactNode }) {
             menuItems={menuItems}
             currentHref={currentItem?.href}
             onNavigate={router.push}
-            loading={auth.loading || permissions.loading}
+            loading={loading}
             isAdmin={userRoles.includes("admin")}
           />
         </Stack>

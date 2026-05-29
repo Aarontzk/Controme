@@ -12,6 +12,25 @@ describe("role gating", () => {
     ).toEqual(["qc_operator", "ppic"]);
   });
 
+  it("resolves role names from DaaS junction rows (roles[].role_id)", () => {
+    expect(
+      getRoleNames({
+        roles: [
+          {
+            id: "c1acef57-junction",
+            role_id: { id: "10d554ea-role", name: "manager" },
+          },
+        ],
+      })
+    ).toEqual(["manager"]);
+  });
+
+  it("resolves a role_id given as a bare string name", () => {
+    expect(getRoleNames({ roles: [{ id: "jid", role_id: "qc_operator" }] })).toEqual([
+      "qc_operator",
+    ]);
+  });
+
   it("treats admin access as the app admin role", () => {
     expect(getRoleNames({ admin_access: true })).toEqual(["admin"]);
   });

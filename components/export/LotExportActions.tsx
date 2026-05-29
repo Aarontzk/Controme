@@ -3,15 +3,14 @@
 import { Button, Group } from "@mantine/core";
 
 import { buildLotCsv } from "@/lib/export/csv";
-import { getRoleNames, requireRole } from "@/lib/auth/role-gating";
-import { useAuth } from "@/lib/buildpad/hooks";
+import { requireRole } from "@/lib/auth/role-gating";
+import { useAppRoles } from "@/lib/auth/useAppRoles";
 
 export function LotExportActions({ lotId }: { lotId: string }) {
-  const auth = useAuth();
-  const roles = getRoleNames(auth.user);
+  const { roles, loading } = useAppRoles();
   const canExport = requireRole(roles, ["admin", "manager"]);
 
-  if (!canExport) return null;
+  if (loading || !canExport) return null;
 
   const exportCsv = async () => {
     const response = await fetch(`/api/items/qc_lots/${lotId}`, {
