@@ -182,3 +182,37 @@ h6 {
 [data-mantine-color-scheme="dark"] .v-table .no-items-text {
   background-color: var(--ds-primary-muted);
 }
+
+/* ── App navbar / top header (brand banner) ──────────────────
+   ContentLayout renders its header bar as the first child Box inside
+   AppShell.Main. We can't edit that Buildpad component, so we brand it here:
+   a deep-green lab-image banner with white title + controls. */
+[class*="mantine-AppShell-main"] > *:first-child {
+  background-color: var(--ds-primary) !important;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(0, 72, 56, 0.95) 0%,
+      rgba(0, 77, 62, 0.86) 45%,
+      rgba(0, 72, 56, 0.62) 100%
+    ),
+    url("/lab-hero.png") !important;
+  background-size: cover !important;
+  background-position: center 35% !important;
+  background-repeat: no-repeat !important;
+  border-bottom: none !important;
+  min-height: 64px;
+}
+[class*="mantine-AppShell-main"] > *:first-child .mantine-Title-root {
+  color: #ffffff;
+}
+[class*="mantine-AppShell-main"] > *:first-child .mantine-Breadcrumbs-root a,
+[class*="mantine-AppShell-main"] > *:first-child .mantine-Anchor-root {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+[class*="mantine-AppShell-main"] > *:first-child button {
+  color: #ffffff;
+}
+[class*="mantine-AppShell-main"] > *:first-child .mantine-Skeleton-root {
+  opacity: 0.4;
+}
