@@ -1,11 +1,13 @@
 "use client";
 
 import { Box, Stack, Text } from "@mantine/core";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, type ReactNode } from "react";
 
 import { ContentLayout } from "@/components/ui/content-layout";
 import { AppRoleNavigation } from "@/components/navigation/AppRoleNavigation";
+import darkLogo from "@/assets/dark logo.png";
 import { getMenuForRoles } from "@/lib/auth/role-gating";
 import { useAppRoles } from "@/lib/auth/useAppRoles";
 
@@ -28,10 +30,26 @@ export function AuthenticatedAppShell({ children }: { children: ReactNode }) {
       title={currentItem?.label ?? "Controme"}
       breadcrumbs={[{ label: "Controme", href: "/" }]}
       loading={loading}
+      sidebarWidth={300}
       sidebar={
-        <Stack gap="sm" p="sm">
-          <Box px="xs" py="sm">
-            <Text fw={700}>Controme</Text>
+        <Stack gap="var(--ds-spacing-3)" p="var(--ds-spacing-3)">
+          <Box
+            style={{
+              borderBottom: "1px solid var(--ds-border-color)",
+              padding: "var(--ds-spacing-2) var(--ds-spacing-1) var(--ds-spacing-4)"
+            }}
+          >
+            <Image
+              src={darkLogo}
+              alt="Controme"
+              width={118}
+              priority
+              style={{
+                height: "auto",
+                width: "min(118px, 70%)",
+                marginBottom: "var(--ds-spacing-3)"
+              }}
+            />
             <Text size="xs" c="dimmed">
               Colour QC & Lot Traceability
             </Text>

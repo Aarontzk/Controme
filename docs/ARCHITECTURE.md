@@ -89,6 +89,14 @@ QC operator
 
 Lot records must be immutable: corrections create new records, not edits.
 
+### Manager Dashboard Insight Rail
+
+The manager dashboard includes a client-side `Ask AI` rail that stays available
+as a small fixed button on the right side of the screen. It does not call an
+external model yet. The first slice derives deterministic answers from the same
+`qc_lots` rows used by the dashboard cards, covering shift summary, risk lots,
+weakest pass rate, and Delta E trend.
+
 ## Deployment Topology
 
 | Environment | Entry point | Backend |

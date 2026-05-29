@@ -44,10 +44,15 @@ export function LotExportActions({ lotId }: { lotId: string }) {
 
   return (
     <Group gap="xs">
-      <Button variant="light" onClick={exportCsv}>
+      <Button variant="outline" color="primary" onClick={exportCsv}>
         Export CSV
       </Button>
-      <Button component="a" href={`/api/export/lot/${lotId}`} target="_blank">
+      <Button
+        component="a"
+        href={`/api/export/lot/${lotId}`}
+        target="_blank"
+        color="cta"
+      >
         Export PDF
       </Button>
     </Group>

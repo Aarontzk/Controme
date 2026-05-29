@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { Box, Container, Stack, Text, Title } from "@mantine/core";
 import { useRouter } from "next/navigation";
 
 import { CollectionList } from "@/components/ui/collection-list";
@@ -11,13 +11,18 @@ export default function QcLotsPage() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
-        <div>
+        <Box
+          style={{
+            borderBottom: "1px solid var(--ds-border-color)",
+            paddingBottom: "var(--ds-spacing-4)"
+          }}
+        >
           <Title order={1}>QC Lot History</Title>
           <Text c="dimmed">
             Immutable QC records. Every check is logged with its server-computed
-            {" ΔE"}, verdict, and audit trail.
+            {" \u0394E"}, verdict, and audit trail.
           </Text>
-        </div>
+        </Box>
         <CollectionList
           collection="qc_lots"
           fields={[
@@ -29,7 +34,7 @@ export default function QcLotsPage() {
             "warning_flag",
             "delta_e",
             "reject_reason",
-            "operator_id",
+            "operator_id"
           ]}
           limit={25}
           enableSearch

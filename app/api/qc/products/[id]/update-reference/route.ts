@@ -15,6 +15,7 @@ const updateReferenceSchema = z.object({
   tol_b: z.number().finite().nonnegative(),
   delta_e_max: z.number().finite().positive(),
   rgb_approx: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  warning_margin: z.number().finite().min(0).max(1).optional(),
   reason: z.string().trim().min(3).max(500),
 });
 

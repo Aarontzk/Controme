@@ -6,7 +6,7 @@ import {
 } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
-import { Inter } from "next/font/google";
+import { Inter, Roboto_Condensed } from "next/font/google";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "./design-tokens.css";
@@ -18,9 +18,16 @@ const inter = Inter({
   subsets: ["latin"]
 });
 
+const robotoCondensed = Roboto_Condensed({
+  variable: "--font-roboto-condensed",
+  subsets: ["latin"],
+  weight: ["700"]
+});
+
 export const metadata: Metadata = {
-  title: "Buildpad App",
-  description: "DaaS-ready Next.js app with a token-based design system"
+  title: "Controme | Retas Siber Imut",
+  description:
+    "Enterprise-ready aroma QC platform for PT Indo Aneka Atsiri by Tim Retas Siber Imut"
 };
 
 export default function RootLayout({
@@ -36,7 +43,7 @@ export default function RootLayout({
           content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"
         />
       </head>
-      <body className={inter.variable}>
+      <body className={`${inter.variable} ${robotoCondensed.variable}`}>
         <MantineProvider theme={theme} defaultColorScheme="auto">
           <ModalsProvider>
             <Notifications position="top-right" />

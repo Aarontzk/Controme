@@ -1,11 +1,13 @@
-/* ═══════════════════════════════════════════════════════════
-   Buildpad Global Styles
-   Uses design tokens — do not hard-code colors or spacing.
-   ═══════════════════════════════════════════════════════════ */
-
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Fraunces:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap");
+/*
+  Buildpad Global Styles
+  Uses design tokens. Keep raw values in app/design-tokens.css.
+*/
 
 body {
+  --ds-font-family: var(--font-inter), Inter, "Helvetica Neue", Arial, sans-serif;
+  --ds-font-sans: var(--font-inter), Inter, "Helvetica Neue", Arial, sans-serif;
+  --ds-font-heading: var(--font-roboto-condensed), "Roboto Condensed", Inter, sans-serif;
+
   background: var(--ds-body-bg);
   color: var(--ds-body-color);
   font-family: var(--ds-font-family);
@@ -15,14 +17,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--ds-font-heading);
+}
+
 .emoji-icon {
   font-size: 1.2rem;
   line-height: 1;
 }
 
-/* ── Tabs ─────────────────────────────────────────────────── */
 .mantine-Tabs-tab {
-  transition: background var(--ds-transition-fast, 150ms ease), color var(--ds-transition-fast, 150ms ease);
+  transition: background var(--ds-transition-fast), color var(--ds-transition-fast);
 }
 
 .mantine-Tabs-tab:hover {
@@ -37,35 +47,31 @@ body {
   font-weight: 600;
 }
 
-/* ── Notifications ────────────────────────────────────────── */
 .mantine-Notification-root[data-variant="success"] {
-  border-left-color: var(--ds-success);
+  border-inline-start-color: var(--ds-success);
 }
 
 .mantine-Notification-root[data-variant="error"] {
-  border-left-color: var(--ds-danger);
+  border-inline-start-color: var(--ds-danger);
 }
 
 .mantine-Notification-root[data-variant="warning"] {
-  border-left-color: var(--ds-warning);
+  border-inline-start-color: var(--ds-warning);
 }
 
 .mantine-Notification-root[data-variant="info"] {
-  border-left-color: var(--ds-info);
+  border-inline-start-color: var(--ds-info);
 }
 
-/* ── Form Focus ───────────────────────────────────────────── */
 .mantine-Input-input:focus {
   border-color: var(--ds-primary);
   box-shadow: var(--ds-focus-ring);
 }
 
-/* ── Button Hover Lift ────────────────────────────────────── */
 .mantine-Button-root:hover {
   transform: translateY(-1px);
 }
 
-/* ── Interactive Elements ─────────────────────────────────── */
 .mantine-Modal-close:hover {
   background-color: var(--ds-gray-200);
 }
@@ -76,15 +82,103 @@ body {
 }
 
 .mantine-ActionIcon-root {
-  transition: all var(--ds-transition-fast, 150ms ease);
+  transition: all var(--ds-transition-fast);
 }
 
 .mantine-ActionIcon-root:hover {
   background-color: var(--ds-gray-200);
 }
 
-/* ── Cards ────────────────────────────────────────────────── */
 .mantine-Card-root {
   border: 1px solid var(--ds-border-color);
   box-shadow: var(--ds-shadow-lg);
+}
+
+.mantine-AppShell-navbar {
+  background: linear-gradient(
+    180deg,
+    var(--ds-surface-deep) 0%,
+    var(--ds-surface-deep-strong) 100%
+  );
+  border-color: var(--ds-border-color);
+}
+
+.mantine-AppShell-main {
+  background: var(--ds-body-bg);
+}
+
+.mantine-AppShell-main > div:first-child {
+  background: var(--ds-surface-white);
+  border-color: var(--ds-border-color);
+}
+
+[data-testid="collection-list"] {
+  overflow: hidden;
+  border: 1px solid var(--ds-border-color);
+  border-radius: var(--ds-radius-md);
+  background: var(--ds-surface-white);
+  box-shadow: var(--ds-shadow-lg);
+}
+
+.collection-list-toolbar,
+.collection-list-footer,
+.collection-list-bottom-pagination {
+  background: var(--ds-surface-white);
+  border-color: var(--ds-border-color);
+  padding: var(--ds-spacing-3) var(--ds-spacing-4);
+}
+
+.collection-list-filter-panel {
+  background: var(--ds-surface-deep);
+  border-color: var(--ds-border-color);
+  padding: var(--ds-spacing-4);
+}
+
+.collection-list-search {
+  width: min(18rem, 100%);
+}
+
+.table-header .cell {
+  background-color: var(--ds-surface-deep);
+  border-color: var(--ds-border-color);
+  color: var(--ds-text-secondary);
+}
+
+.table-row .cell {
+  border-color: var(--ds-border-color-subtle);
+  background-color: var(--ds-surface-white);
+}
+
+.table-row.clickable:not(.subdued):hover .cell,
+.table-header .cell.sortable:hover,
+.table-header .cell.manual:hover,
+.v-table table .sortable-ghost .cell,
+.v-table .loading-text,
+.v-table .no-items-text {
+  background-color: var(--ds-primary-muted);
+}
+
+.v-table.inline {
+  border-color: var(--ds-border-color);
+  border-radius: var(--ds-radius-md);
+}
+
+.drag-handle:hover.sorted-manually,
+.sort-icon.active,
+.table-header .cell.manual.sorted-manually,
+.collection-list-context-menu-item.active {
+  color: var(--ds-primary);
+}
+
+.collection-list-context-menu-item.danger {
+  color: var(--ds-danger);
+}
+
+[data-mantine-color-scheme="dark"] .table-row.clickable:not(.subdued):hover .cell,
+[data-mantine-color-scheme="dark"] .table-header .cell.sortable:hover,
+[data-mantine-color-scheme="dark"] .table-header .cell.manual:hover,
+[data-mantine-color-scheme="dark"] .v-table table .sortable-ghost .cell,
+[data-mantine-color-scheme="dark"] .v-table .loading-text,
+[data-mantine-color-scheme="dark"] .v-table .no-items-text {
+  background-color: var(--ds-primary-muted);
 }

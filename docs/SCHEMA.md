@@ -26,10 +26,13 @@ never direct browser→Supabase.
 | `tol_a` | float | ± tolerance a\* |
 | `tol_b` | float | ± tolerance b\* |
 | `delta_e_max` | float | reject when measured ΔE exceeds this |
+| `warning_margin` | float | near-limit warning band fraction; default `0.10` |
 | `rgb_approx` | string | `#RRGGBB` for UI preview only |
 | `active` | boolean | reference in use |
 
 Reference edits are versioned (FR-03) → `product_reference_versions`.
+The admin product page derives `ref_l/a/b` from a reference photo or RGB picker, then writes
+the normalized reference values through the versioned update route.
 
 ### `qc_lots` — immutable QC check records (FR-02, PRD §4.3)
 

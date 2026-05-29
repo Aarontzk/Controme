@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Group, Paper, Progress, SimpleGrid, Stack, Text } from "@mantine/core";
+import {
+  Badge,
+  Button,
+  Group,
+  Paper,
+  Progress,
+  SimpleGrid,
+  Stack,
+  Text
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 
 import {
@@ -9,34 +18,66 @@ import {
   buildDeltaTrend,
   getRejectedOrWarning,
   summarizeClearance,
-  type QcLotAnalyticsRow,
+  type QcLotAnalyticsRow
 } from "@/lib/dashboard/qc-analytics";
+import { ManagerAiAssistant } from "./ManagerAiAssistant";
 
 async function fetchLots(): Promise<QcLotAnalyticsRow[]> {
   const response = await fetch("/api/items/qc_lots?limit=200&sort=-checked_at", {
     credentials: "include",
-    cache: "no-store",
+    cache: "no-store"
   });
   if (!response.ok) return [];
   const json = (await response.json()) as { data?: QcLotAnalyticsRow[] };
   return json.data ?? [];
 }
 
+function statusColor(status: string | null | undefined): string {
+  if (status === "pass") return "success";
+  if (status === "reject") return "danger";
+  return "warning";
+}
+
+function panelStyle(tone: "neutral" | "pass" | "reject" | "warning" = "neutral") {
+  if (tone === "pass") {
+    return {
+      background: "var(--ds-status-pass-bg)",
+      borderColor: "var(--ds-status-pass-border)"
+    };
+  }
+  if (tone === "reject") {
+    return {
+      background: "var(--ds-status-reject-bg)",
+      borderColor: "var(--ds-status-reject-border)"
+    };
+  }
+  if (tone === "warning") {
+    return {
+      background: "var(--ds-status-warning-bg)",
+      borderColor: "var(--ds-status-warning-border)"
+    };
+  }
+  return {
+    background: "var(--ds-surface-white)",
+    borderColor: "var(--ds-border-color)"
+  };
+}
+
 function MetricCard({
   label,
   value,
-  color,
+  tone
 }: {
   label: string;
   value: string | number;
-  color?: string;
+  tone?: "pass" | "reject" | "warning";
 }) {
   return (
-    <Paper withBorder p="md" radius="md">
+    <Paper withBorder p="md" radius="md" style={panelStyle(tone)}>
       <Text size="sm" c="dimmed">
         {label}
       </Text>
-      <Text fz="xl" fw={700} c={color}>
+      <Text fz="xl" fw={700}>
         {value}
       </Text>
     </Paper>
@@ -60,20 +101,22 @@ export function PpicDashboard() {
   return (
     <Stack gap="lg">
       <SimpleGrid cols={{ base: 1, sm: 3 }}>
-        <MetricCard label="Pending QC" value={summary.pending} color="yellow" />
-        <MetricCard label="QC-cleared" value={summary.cleared} color="green" />
-        <MetricCard label="Rejected" value={summary.rejected} color="red" />
+        <MetricCard label="Pending QC" value={summary.pending} tone="warning" />
+        <MetricCard label="QC-cleared" value={summary.cleared} tone="pass" />
+        <MetricCard label="Rejected" value={summary.rejected} tone="reject" />
       </SimpleGrid>
-      <Paper withBorder p="md" radius="md">
+      <Paper withBorder p="md" radius="md" style={panelStyle()}>
         <Stack gap="sm">
           <Group justify="space-between">
             <Text fw={700}>Recent clearance</Text>
-            <Badge variant="light">refetch every 4s</Badge>
+            <Badge variant="outline" color="primary">
+              refetch every 4s
+            </Badge>
           </Group>
           {recent.map((row) => (
             <Group key={row.id} justify="space-between">
-              <Text>{row.lot_code || row.id}</Text>
-              <Badge color={row.status === "pass" ? "green" : "red"}>
+              <Text fw={600}>{row.lot_code || row.id}</Text>
+              <Badge color={statusColor(row.status)} variant="outline">
                 {row.status ?? "pending"}
               </Badge>
             </Group>
@@ -96,7 +139,7 @@ export function ManagerDashboard() {
         notifications.show({
           title: flagged.status === "reject" ? "Rejected lot" : "Warning lot",
           message: flagged.lot_code || flagged.id,
-          color: flagged.status === "reject" ? "red" : "yellow",
+          color: flagged.status === "reject" ? "danger" : "warning"
         });
       }
     });
@@ -109,17 +152,21 @@ export function ManagerDashboard() {
 
   return (
     <Stack gap="lg">
+      <ManagerAiAssistant rows={rows} />
       <SimpleGrid cols={{ base: 1, md: 2 }}>
         {passRates.map((rate) => (
-          <Paper key={rate.productId} withBorder p="md" radius="md">
+          <Paper key={rate.productId} withBorder p="md" radius="md" style={panelStyle()}>
             <Stack gap="xs">
               <Group justify="space-between">
                 <Text fw={700}>{rate.productName}</Text>
-                <Badge color={rate.passRate >= 0.8 ? "green" : "yellow"}>
+                <Badge
+                  color={rate.passRate >= 0.8 ? "success" : "warning"}
+                  variant="outline"
+                >
                   {(rate.passRate * 100).toFixed(0)}%
                 </Badge>
               </Group>
-              <Progress value={rate.passRate * 100} color="green" />
+              <Progress value={rate.passRate * 100} color="success" />
               <Text size="sm" c="dimmed">
                 {rate.pass} pass / {rate.reject} reject / {rate.total} total
               </Text>
@@ -128,7 +175,7 @@ export function ManagerDashboard() {
         ))}
       </SimpleGrid>
 
-      <Paper withBorder p="md" radius="md">
+      <Paper withBorder p="md" radius="md" style={panelStyle()}>
         <Stack gap="sm">
           <Text fw={700}>Delta E trend</Text>
           {trend.map((point) => (
@@ -136,7 +183,7 @@ export function ManagerDashboard() {
               <Text w={120} size="sm" truncate>
                 {point.label}
               </Text>
-              <Progress flex={1} value={(point.deltaE / maxDelta) * 100} />
+              <Progress flex={1} value={(point.deltaE / maxDelta) * 100} color="primary" />
               <Text size="sm">{point.deltaE.toFixed(2)}</Text>
             </Group>
           ))}
@@ -144,20 +191,29 @@ export function ManagerDashboard() {
         </Stack>
       </Paper>
 
-      <Paper withBorder p="md" radius="md">
+      <Paper withBorder p="md" radius="md" style={panelStyle()}>
         <Stack gap="sm">
           <Group justify="space-between">
             <Text fw={700}>Rejects and warnings</Text>
-            <Button variant="light" size="xs" onClick={() => void fetchLots().then(setRows)}>
+            <Button
+              variant="light"
+              color="cta"
+              size="xs"
+              onClick={() => void fetchLots().then(setRows)}
+            >
               Refresh
             </Button>
           </Group>
           {flagged.map((row) => (
             <Group key={row.id} justify="space-between">
-              <Text>{row.lot_code || row.id}</Text>
+              <Text fw={600}>{row.lot_code || row.id}</Text>
               <Group gap="xs">
-                {row.warning_flag ? <Badge color="yellow">warning</Badge> : null}
-                <Badge color={row.status === "reject" ? "red" : "green"}>
+                {row.warning_flag ? (
+                  <Badge color="warning" variant="outline">
+                    warning
+                  </Badge>
+                ) : null}
+                <Badge color={statusColor(row.status)} variant="outline">
                   {row.status}
                 </Badge>
               </Group>

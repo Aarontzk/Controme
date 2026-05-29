@@ -80,7 +80,15 @@ export function CameraCapture({
   useEffect(() => stopCamera, [stopCamera]);
 
   return (
-    <Paper withBorder p="md" radius="md">
+    <Paper
+      withBorder
+      p="md"
+      radius="md"
+      style={{
+        background: "var(--ds-surface-white)",
+        borderColor: "var(--ds-border-color)"
+      }}
+    >
       <Stack gap="sm">
         <Group justify="space-between">
           <Box>
@@ -91,25 +99,28 @@ export function CameraCapture({
           </Box>
           <Group gap="xs">
             {active ? (
-              <Button variant="light" color="gray" onClick={stopCamera}>
+              <Button variant="outline" color="primary" onClick={stopCamera}>
                 Stop
               </Button>
             ) : (
-              <Button variant="light" onClick={startCamera}>
+              <Button variant="outline" color="primary" onClick={startCamera}>
                 Start camera
               </Button>
             )}
-            <Button onClick={captureFrame} disabled={!active}>
+            <Button color="cta" onClick={captureFrame} disabled={!active}>
               Grab frame
             </Button>
           </Group>
         </Group>
         {error ? (
-          <Alert color="yellow" variant="light">
+          <Alert color="warning" variant="light">
             {error}
           </Alert>
         ) : null}
-        <Box pos="relative" style={{ overflow: "hidden", borderRadius: 8 }}>
+        <Box
+          pos="relative"
+          style={{ overflow: "hidden", borderRadius: "var(--ds-radius-md)" }}
+        >
           <video
             ref={videoRef}
             muted
@@ -117,8 +128,8 @@ export function CameraCapture({
             style={{
               display: "block",
               width: "100%",
-              minHeight: 220,
-              background: "var(--mantine-color-gray-1)",
+              minHeight: "calc(var(--ds-spacing-16) * 3.5)",
+              background: "var(--ds-surface-deep)",
             }}
           />
           <Box
@@ -129,8 +140,9 @@ export function CameraCapture({
             w="50%"
             h="50%"
             style={{
-              border: "2px solid var(--mantine-color-green-5)",
-              boxShadow: "0 0 0 999px rgba(0, 0, 0, 0.18)",
+              border: "var(--ds-roi-border) solid var(--ds-primary-light)",
+              boxShadow:
+                "0 0 0 999px color-mix(in srgb, var(--ds-text-primary) 18%, transparent)",
               pointerEvents: "none",
             }}
           />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { SyntheticEvent } from "react";
+import type { CSSProperties, SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -60,6 +60,26 @@ function getRgbCss(rgb: RgbColor): string {
 function formatLab(lab: LabColor): string {
   return `L ${lab.L.toFixed(2)}, a ${lab.a.toFixed(2)}, b ${lab.b.toFixed(2)}`;
 }
+
+function statusColor(status: "pass" | "reject"): "success" | "danger" {
+  return status === "pass" ? "success" : "danger";
+}
+
+function statusPanelStyle(status: "pass" | "reject"): CSSProperties {
+  return {
+    background:
+      status === "pass" ? "var(--ds-status-pass-bg)" : "var(--ds-status-reject-bg)",
+    borderColor:
+      status === "pass"
+        ? "var(--ds-status-pass-border)"
+        : "var(--ds-status-reject-border)",
+  };
+}
+
+const neutralPanelStyle: CSSProperties = {
+  background: "var(--ds-surface-white)",
+  borderColor: "var(--ds-border-color)",
+};
 
 export function ColorQcCapture({
   products = REFERENCE_PRODUCTS,
@@ -269,7 +289,7 @@ export function ColorQcCapture({
   }, [handleFileChange, selectedFile]);
 
   return (
-    <Card withBorder radius="md" p="lg">
+    <Card withBorder radius="md" p="lg" style={neutralPanelStyle}>
       <Stack gap="lg">
         <Group justify="space-between" align="flex-start">
           <Box>
@@ -278,16 +298,28 @@ export function ColorQcCapture({
               Center ROI color, texture, and contamination checks.
             </Text>
           </Box>
-          {finalStatus ? (
-            <Badge
-              color={finalStatus === "pass" ? "green" : "red"}
-              size="lg"
-              data-testid="qc-status"
-            >
-              {finalStatus}
-            </Badge>
-          ) : null}
         </Group>
+
+        {finalStatus ? (
+          <Paper withBorder p="md" radius="md" style={statusPanelStyle(finalStatus)}>
+            <Group justify="space-between" align="center">
+              <Box>
+                <Text fw={700}>QC Status Classification</Text>
+                <Text size="sm" c="dimmed">
+                  Sample measured through color, contamination, and consistency lanes.
+                </Text>
+              </Box>
+              <Badge
+                color={statusColor(finalStatus)}
+                size="lg"
+                variant="outline"
+                data-testid="qc-status"
+              >
+                {finalStatus}
+              </Badge>
+            </Group>
+          </Paper>
+        ) : null}
 
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <SelectDropdown
@@ -353,7 +385,7 @@ export function ColorQcCapture({
                 pointerEvents: "none",
               }}
             />
-            <Button onClick={() => fileInputRef.current?.click()}>
+            <Button color="cta" onClick={() => fileInputRef.current?.click()}>
               Upload sample photo
             </Button>
           </Group>
@@ -362,13 +394,13 @@ export function ColorQcCapture({
         <CameraCapture onCapture={handleFileChange} />
 
         {error ? (
-          <Alert color="red" variant="light">
+          <Alert color="danger" variant="light">
             {error}
           </Alert>
         ) : null}
 
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-          <Paper withBorder p="md" radius="md">
+          <Paper withBorder p="md" radius="md" style={neutralPanelStyle}>
             {imageUrl ? (
               <MantineImage
                 src={imageUrl}
@@ -394,25 +426,21 @@ export function ColorQcCapture({
                     color={
                       product.rgbApprox
                         ? getRgbCss(product.rgbApprox)
-                        : "var(--mantine-color-gray-4)"
+                        : "var(--ds-border-color)"
                     }
                     size={42}
                     data-testid="reference-swatch"
                   />
                   <Text size="sm">{product.name}</Text>
                   {sessionReference ? (
-                    <Badge color="blue" variant="light">
+                    <Badge color="primary" variant="outline">
                       session calibrated
                     </Badge>
                   ) : null}
                 </Group>
                 <Group>
                   <ColorSwatch
-                    color={
-                      measuredRgb
-                        ? getRgbCss(measuredRgb)
-                        : "var(--mantine-color-gray-3)"
-                    }
+                    color={measuredRgb ? getRgbCss(measuredRgb) : "var(--ds-gray-300)"}
                     size={42}
                     data-testid="measured-swatch"
                   />
@@ -425,7 +453,12 @@ export function ColorQcCapture({
               </Stack>
             </Paper>
 
-            <Paper withBorder p="md" radius="md">
+            <Paper
+              withBorder
+              p="md"
+              radius="md"
+              style={evaluation ? statusPanelStyle(evaluation.status) : neutralPanelStyle}
+            >
               <Stack gap="xs">
                 <Text fw={600}>Color result</Text>
                 {evaluation && measuredLab ? (
@@ -433,7 +466,8 @@ export function ColorQcCapture({
                     <Group gap="xs">
                       <Text size="sm">Color lane</Text>
                       <Badge
-                        color={evaluation.status === "pass" ? "green" : "red"}
+                        color={statusColor(evaluation.status)}
+                        variant="outline"
                         data-testid="color-status"
                       >
                         {evaluation.status}
@@ -443,7 +477,7 @@ export function ColorQcCapture({
                       {"\u0394E"} {evaluation.deltaE.toFixed(2)}
                     </Text>
                     {evaluation.warningFlag ? (
-                      <Badge color="yellow" variant="light" data-testid="warning-flag">
+                      <Badge color="warning" variant="outline" data-testid="warning-flag">
                         warning band
                       </Badge>
                     ) : null}
@@ -454,6 +488,7 @@ export function ColorQcCapture({
                       <Button
                         size="xs"
                         variant="light"
+                        color="primary"
                         onClick={() => setSessionReference(measuredLab)}
                       >
                         Use as session reference
@@ -462,7 +497,7 @@ export function ColorQcCapture({
                         <Button
                           size="xs"
                           variant="subtle"
-                          color="gray"
+                          color="primary"
                           onClick={() => setSessionReference(null)}
                         >
                           Reset reference
@@ -470,7 +505,7 @@ export function ColorQcCapture({
                       ) : null}
                     </Group>
                     {evaluation.channelFlags.length > 0 ? (
-                      <List size="sm" spacing={4}>
+                      <List size="sm" spacing="xs">
                         {evaluation.channelFlags.map((flag) => (
                           <List.Item key={flag.channel}>
                             {flag.channel} {flag.direction}:{" "}
@@ -492,7 +527,21 @@ export function ColorQcCapture({
               </Stack>
             </Paper>
 
-            <Paper withBorder p="md" radius="md">
+            <Paper
+              withBorder
+              p="md"
+              radius="md"
+              style={
+                sampleAnalysis
+                  ? statusPanelStyle(
+                      sampleAnalysis.contamination.status === "reject" ||
+                        sampleAnalysis.consistency.status === "reject"
+                        ? "reject"
+                        : "pass"
+                    )
+                  : neutralPanelStyle
+              }
+            >
               <Stack gap="xs">
                 <Text fw={600}>Powder and contamination checks</Text>
                 {sampleAnalysis ? (
@@ -500,11 +549,8 @@ export function ColorQcCapture({
                     <Group gap="xs">
                       <Text size="sm">Contamination lane</Text>
                       <Badge
-                        color={
-                          sampleAnalysis.contamination.status === "pass"
-                            ? "green"
-                            : "red"
-                        }
+                        color={statusColor(sampleAnalysis.contamination.status)}
+                        variant="outline"
                         data-testid="contamination-status"
                       >
                         {sampleAnalysis.contamination.status}
@@ -528,11 +574,8 @@ export function ColorQcCapture({
                     <Group gap="xs">
                       <Text size="sm">Consistency lane</Text>
                       <Badge
-                        color={
-                          sampleAnalysis.consistency.status === "pass"
-                            ? "green"
-                            : "red"
-                        }
+                        color={statusColor(sampleAnalysis.consistency.status)}
+                        variant="outline"
                         data-testid="consistency-status"
                       >
                         {sampleAnalysis.consistency.status}
@@ -547,7 +590,7 @@ export function ColorQcCapture({
                       {sampleAnalysis.metrics.textureContrast.toFixed(2)}
                     </Text>
                     {sampleAnalysis.metrics.lightingWarnings.length > 0 ? (
-                      <List size="sm" spacing={4}>
+                      <List size="sm" spacing="xs">
                         {sampleAnalysis.metrics.lightingWarnings.map(
                           (warning) => (
                             <List.Item key={warning}>{warning}</List.Item>
@@ -569,7 +612,7 @@ export function ColorQcCapture({
         </SimpleGrid>
 
         {persist ? (
-          <Paper withBorder p="md" radius="md">
+          <Paper withBorder p="md" radius="md" style={neutralPanelStyle}>
             <Stack gap="sm">
               <Group justify="space-between" align="center">
                 <Box>
@@ -584,32 +627,34 @@ export function ColorQcCapture({
                   loading={saving}
                   disabled={!selectedFile || !measuredLab}
                   data-testid="save-lot"
+                  color="cta"
                 >
                   Save QC lot
                 </Button>
               </Group>
               {saveError ? (
-                <Alert color="red" variant="light" data-testid="save-error">
+                <Alert color="danger" variant="light" data-testid="save-error">
                   {saveError}
                 </Alert>
               ) : null}
               {savedLot ? (
                 <Alert
-                  color={savedLot.status === "pass" ? "green" : "red"}
+                  color={statusColor(savedLot.status)}
                   variant="light"
                   data-testid="saved-lot"
                 >
-                  <Stack gap={4}>
+                  <Stack gap="var(--ds-spacing-1)">
                     <Group gap="xs">
                       <Text fw={600}>Saved — server verdict:</Text>
                       <Badge
-                        color={savedLot.status === "pass" ? "green" : "red"}
+                        color={statusColor(savedLot.status)}
+                        variant="outline"
                         data-testid="saved-status"
                       >
                         {savedLot.status}
                       </Badge>
                       {savedLot.warningFlag ? (
-                        <Badge color="yellow" variant="light">
+                        <Badge color="warning" variant="outline">
                           warning
                         </Badge>
                       ) : null}
@@ -625,6 +670,7 @@ export function ColorQcCapture({
                         <Button
                           size="xs"
                           variant="light"
+                          color="primary"
                           data-testid="view-saved-lot"
                           onClick={() =>
                             router.push(`/qc/lots/${savedLot.lotId}`)

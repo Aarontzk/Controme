@@ -1,10 +1,10 @@
-import { Alert, Container, Stack, Text, Title } from "@mantine/core";
+import { Alert, Box, Container, Stack, Text, Title } from "@mantine/core";
 
 import { getAuthHeaders, getDaaSUrl } from "@/lib/api/auth-headers";
 import {
   mapDaasProduct,
   type DaasProductRow,
-  type ProductReference,
+  type ProductReference
 } from "@/lib/domain";
 import { ColorQcCapture } from "@/components/vision/ColorQcCapture";
 
@@ -16,7 +16,7 @@ async function fetchProducts(): Promise<ProductReference[]> {
   const daasUrl = getDaaSUrl();
   const res = await fetch(`${daasUrl}/api/items/products?limit=200`, {
     headers,
-    cache: "no-store",
+    cache: "no-store"
   });
   if (!res.ok) {
     return [];
@@ -33,15 +33,20 @@ export default async function QcCapturePage() {
   return (
     <Container size="lg" py="xl">
       <Stack gap="lg">
-        <div>
+        <Box
+          style={{
+            borderBottom: "1px solid var(--ds-border-color)",
+            paddingBottom: "var(--ds-spacing-4)"
+          }}
+        >
           <Title order={1}>QC Capture</Title>
           <Text c="dimmed">
-            Upload a sample photo. {"ΔE"} and the pass/reject verdict are
+            Upload a sample photo. {"\u0394E"} and the pass/reject verdict are
             recomputed and recorded server-side.
           </Text>
-        </div>
+        </Box>
         {products.length === 0 ? (
-          <Alert color="yellow" variant="light">
+          <Alert color="warning" variant="light">
             No products available. Seed products in DaaS or check your
             permissions.
           </Alert>

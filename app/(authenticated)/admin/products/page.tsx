@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Stack, Text, Title } from "@mantine/core";
+import { Box, Container, Stack, Text, Title } from "@mantine/core";
 import { useRouter } from "next/navigation";
 
 import { CollectionList } from "@/components/ui/collection-list";
@@ -11,13 +11,18 @@ export default function AdminProductsPage() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
-        <div>
+        <Box
+          style={{
+            borderBottom: "1px solid var(--ds-border-color)",
+            paddingBottom: "var(--ds-spacing-4)"
+          }}
+        >
           <Title order={1}>Product References</Title>
           <Text c="dimmed">
             Admin-only product reference management. Reference changes are
             versioned by the backend workflow.
           </Text>
-        </div>
+        </Box>
         <CollectionList
           collection="products"
           fields={[
@@ -29,7 +34,7 @@ export default function AdminProductsPage() {
             "ref_b",
             "delta_e_max",
             "warning_margin",
-            "active",
+            "active"
           ]}
           limit={25}
           enableSearch

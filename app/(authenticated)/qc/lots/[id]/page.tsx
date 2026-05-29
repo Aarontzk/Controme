@@ -8,7 +8,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
-  Title,
+  Title
 } from "@mantine/core";
 import { notFound } from "next/navigation";
 
@@ -53,16 +53,49 @@ function formatNumber(value: number | null | undefined, digits = 2): string {
     : "-";
 }
 
-function getRelatedLabel(value: QcLotDetail["product_id"]): string {
+function getRelatedLabel(
+  value: QcLotDetail["product_id"] | QcLotDetail["operator_id"]
+): string {
   if (!value) return "-";
   if (typeof value === "string") return value;
-  return value.name ?? value.id ?? "-";
+  if ("name" in value && value.name) return value.name;
+  if ("email" in value && value.email) return value.email;
+  return value.id ?? "-";
 }
 
 function getPhotoId(photo: QcLotDetail["photo"]): string | null {
   if (!photo) return null;
   if (typeof photo === "string") return photo;
   return photo.id ?? null;
+}
+
+function statusColor(status: "pass" | "reject"): "success" | "danger" {
+  return status === "pass" ? "success" : "danger";
+}
+
+function panelStyle(tone: "neutral" | "pass" | "reject" | "warning" = "neutral") {
+  if (tone === "pass") {
+    return {
+      background: "var(--ds-status-pass-bg)",
+      borderColor: "var(--ds-status-pass-border)"
+    };
+  }
+  if (tone === "reject") {
+    return {
+      background: "var(--ds-status-reject-bg)",
+      borderColor: "var(--ds-status-reject-border)"
+    };
+  }
+  if (tone === "warning") {
+    return {
+      background: "var(--ds-status-warning-bg)",
+      borderColor: "var(--ds-status-warning-border)"
+    };
+  }
+  return {
+    background: "var(--ds-surface-white)",
+    borderColor: "var(--ds-border-color)"
+  };
 }
 
 async function fetchLot(id: string): Promise<QcLotDetail | null> {
@@ -72,7 +105,7 @@ async function fetchLot(id: string): Promise<QcLotDetail | null> {
   const daasUrl = getDaaSUrl();
   const response = await fetch(`${daasUrl}/api/items/qc_lots/${id}`, {
     headers,
-    cache: "no-store",
+    cache: "no-store"
   });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error("Failed to load QC lot.");
@@ -92,29 +125,31 @@ export default async function QcLotDetailPage({ params }: PageProps) {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
-        <Group justify="space-between" align="flex-start">
-          <Box>
-            <Title order={1}>QC Lot Detail</Title>
-            <Text c="dimmed">
-              Immutable inspection record. Corrections are made by creating a
-              new record, not editing this one.
-            </Text>
-          </Box>
-          <Group gap="xs">
-            <LotExportActions lotId={lot.id} />
-            {lot.warning_flag ? (
-              <Badge color="yellow" variant="light">
-                warning
+        <Paper withBorder p="md" radius="md" style={panelStyle(status)}>
+          <Group justify="space-between" align="flex-start">
+            <Box>
+              <Title order={1}>QC Lot Detail</Title>
+              <Text c="dimmed">
+                Immutable inspection record. Corrections are made by creating a
+                new record, not editing this one.
+              </Text>
+            </Box>
+            <Group gap="xs">
+              <LotExportActions lotId={lot.id} />
+              {lot.warning_flag ? (
+                <Badge color="warning" variant="outline">
+                  warning
+                </Badge>
+              ) : null}
+              <Badge color={statusColor(status)} size="lg" variant="outline">
+                {status}
               </Badge>
-            ) : null}
-            <Badge color={status === "pass" ? "green" : "red"} size="lg">
-              {status}
-            </Badge>
+            </Group>
           </Group>
-        </Group>
+        </Paper>
 
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-          <Paper withBorder p="md" radius="md">
+          <Paper withBorder p="md" radius="md" style={panelStyle()}>
             {photoId ? (
               <Image
                 src={`/api/assets/${photoId}`}
@@ -128,7 +163,7 @@ export default async function QcLotDetailPage({ params }: PageProps) {
           </Paper>
 
           <Stack gap="md">
-            <Paper withBorder p="md" radius="md">
+            <Paper withBorder p="md" radius="md" style={panelStyle()}>
               <Stack gap="xs">
                 <Text fw={700}>Lot identity</Text>
                 <Text>Lot code: {lot.lot_code || lot.id}</Text>
@@ -139,7 +174,7 @@ export default async function QcLotDetailPage({ params }: PageProps) {
               </Stack>
             </Paper>
 
-            <Paper withBorder p="md" radius="md">
+            <Paper withBorder p="md" radius="md" style={panelStyle(status)}>
               <Stack gap="xs">
                 <Text fw={700}>Color diagnosis</Text>
                 <Text>
@@ -148,7 +183,7 @@ export default async function QcLotDetailPage({ params }: PageProps) {
                 </Text>
                 <Text>Delta E: {formatNumber(lot.delta_e)}</Text>
                 {lot.channel_flags?.length ? (
-                  <Stack gap={4}>
+                  <Stack gap="xs">
                     {lot.channel_flags.map((flag) => (
                       <Text key={`${flag.channel}-${flag.direction}`} size="sm">
                         {flag.channel} {flag.direction}:{" "}
@@ -166,21 +201,21 @@ export default async function QcLotDetailPage({ params }: PageProps) {
         </SimpleGrid>
 
         <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
-          <Paper withBorder p="md" radius="md">
+          <Paper withBorder p="md" radius="md" style={panelStyle()}>
             <Text fw={700}>Contamination</Text>
             <Text>{formatNumber((lot.contaminant_ratio ?? 0) * 100, 2)}%</Text>
           </Paper>
-          <Paper withBorder p="md" radius="md">
+          <Paper withBorder p="md" radius="md" style={panelStyle()}>
             <Text fw={700}>Texture std dev</Text>
             <Text>{formatNumber(lot.brightness_stddev)}</Text>
           </Paper>
-          <Paper withBorder p="md" radius="md">
+          <Paper withBorder p="md" radius="md" style={panelStyle()}>
             <Text fw={700}>Texture contrast</Text>
             <Text>{formatNumber(lot.texture_contrast)}</Text>
           </Paper>
         </SimpleGrid>
 
-        <Paper withBorder p="md" radius="md">
+        <Paper withBorder p="md" radius="md" style={panelStyle()}>
           <Stack gap="xs">
             <Text fw={700}>Decision notes</Text>
             <Text>Reject reason: {lot.reject_reason ?? "None"}</Text>
