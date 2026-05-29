@@ -77,10 +77,12 @@ async function main() {
     /\/$/,
     ""
   );
-  const token = env.SUPABASE_SERVICE_ROLE_KEY;
+  // DaaS authenticates with a DaaS session/static token (forwarded as Bearer), NOT the
+  // Supabase service-role key. Use a DaaS static token for this programmatic check.
+  const token = env.DAAS_STATIC_TOKEN;
 
   if (!baseUrl) throw new Error("Missing BUILDPAD_DAAS_URL or NEXT_PUBLIC_BUILDPAD_DAAS_URL.");
-  if (!token) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY.");
+  if (!token) throw new Error("Missing DAAS_STATIC_TOKEN.");
 
   const headers = {
     Authorization: `Bearer ${token}`,
