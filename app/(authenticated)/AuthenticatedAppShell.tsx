@@ -7,6 +7,7 @@ import { useMemo, type ReactNode } from "react";
 
 import { ContentLayout } from "@/components/ui/content-layout";
 import { AppRoleNavigation } from "@/components/navigation/AppRoleNavigation";
+import { NavFooter } from "./NavFooter";
 import darkLogo from "@/assets/dark logo.png";
 import { getMenuForRoles } from "@/lib/auth/role-gating";
 import { useAppRoles } from "@/lib/auth/useAppRoles";
@@ -32,7 +33,11 @@ export function AuthenticatedAppShell({ children }: { children: ReactNode }) {
       loading={loading}
       sidebarWidth={300}
       sidebar={
-        <Stack gap="var(--ds-spacing-3)" p="var(--ds-spacing-3)">
+        <Stack
+          gap="var(--ds-spacing-3)"
+          p="var(--ds-spacing-3)"
+          style={{ minHeight: "100%" }}
+        >
           <Box
             style={{
               borderBottom: "1px solid var(--ds-border-color)",
@@ -61,6 +66,7 @@ export function AuthenticatedAppShell({ children }: { children: ReactNode }) {
             loading={loading}
             isAdmin={userRoles.includes("admin")}
           />
+          <NavFooter roles={userRoles} />
         </Stack>
       }
     >
