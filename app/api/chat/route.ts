@@ -1,17 +1,18 @@
 /**
- * Ask AI — chat endpoint (Bedrock streamText)
+ * Ask AI — chat endpoint (Gemini streamText)
  *
  * Powers the Manager Dashboard "Ask AI" panel. Streams an LLM answer about
  * the user's QC data, calling the DaaS data tools when it needs rows.
  *
  * Pattern from the Buildpad "chat with your data" tutorial:
  * https://app.buildpad.ai/docs/tutorials/ai/chat-with-your-data
+ * (adapted to Google Gemini instead of Bedrock — free tier, no AWS billing.)
  *
  * Required env (see .env.local):
- *   AWS_REGION, AWS_BEARER_TOKEN_BEDROCK, BEDROCK_MODEL_ID
+ *   GOOGLE_GENERATIVE_AI_API_KEY, GEMINI_MODEL_ID
  */
 
-import { bedrock } from "@ai-sdk/amazon-bedrock";
+import { google } from "@ai-sdk/google";
 import { convertToModelMessages, stepCountIs, streamText } from "ai";
 import { NextResponse } from "next/server";
 import { dataTools } from "./tools";
@@ -34,11 +35,11 @@ Behaviour:
 - Answer concisely in the manager's language. Lead with the verdict, then 2-4 supporting bullets citing real lot_codes and ΔE values. Flag any reject/warning lots needing attention.`;
 
 export async function POST(req: Request) {
-  if (!process.env.AWS_BEARER_TOKEN_BEDROCK || !process.env.BEDROCK_MODEL_ID) {
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return NextResponse.json(
       {
         error:
-          "Ask AI is not configured. Set AWS_BEARER_TOKEN_BEDROCK and BEDROCK_MODEL_ID in .env.local.",
+          "Ask AI is not configured. Set GOOGLE_GENERATIVE_AI_API_KEY in .env.local.",
       },
       { status: 503 }
     );
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
 
     const result = streamText({
-      model: bedrock(process.env.BEDROCK_MODEL_ID),
+      model: google(process.env.GEMINI_MODEL_ID ?? "gemini-2.5-flash"),
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
       tools: dataTools,

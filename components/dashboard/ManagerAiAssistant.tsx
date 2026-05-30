@@ -6,7 +6,6 @@ import {
   Badge,
   Box,
   Button,
-  Code,
   Group,
   Loader,
   Paper,
@@ -14,8 +13,10 @@ import {
   Stack,
   Text,
   Tooltip,
+  TypographyStylesProvider,
 } from "@mantine/core";
 import {
+  IconDatabase,
   IconMessageCircle,
   IconRobot,
   IconSend2,
@@ -23,6 +24,8 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { useChat } from "@ai-sdk/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { Textarea } from "@/components/ui/textarea";
 import { MANAGER_AI_PROMPTS } from "@/lib/dashboard/manager-ai";
@@ -61,6 +64,11 @@ const aiButtonStyle: CSSProperties = {
   background: "var(--ds-primary)",
   color: "var(--ds-surface-white)",
   boxShadow: "var(--mantine-shadow-md)",
+};
+
+const markdownStyle: CSSProperties = {
+  fontSize: "var(--mantine-font-size-sm)",
+  lineHeight: 1.5,
 };
 
 function bubbleStyle(role: string): CSSProperties {
@@ -147,14 +155,26 @@ export function ManagerAiAssistant({ rows }: ManagerAiAssistantProps) {
                   <Stack gap="xs">
                     {message.parts.map((part, index) => {
                       if (part.type === "text") {
+                        if (message.role === "user") {
+                          return (
+                            <Text
+                              key={index}
+                              size="sm"
+                              style={{ whiteSpace: "pre-wrap" }}
+                            >
+                              {part.text}
+                            </Text>
+                          );
+                        }
                         return (
-                          <Text
+                          <TypographyStylesProvider
                             key={index}
-                            size="sm"
-                            style={{ whiteSpace: "pre-wrap" }}
+                            style={markdownStyle}
                           >
-                            {part.text}
-                          </Text>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {part.text}
+                            </ReactMarkdown>
+                          </TypographyStylesProvider>
                         );
                       }
                       if (part.type.startsWith("tool-")) {
@@ -163,21 +183,26 @@ export function ManagerAiAssistant({ rows }: ManagerAiAssistantProps) {
                           state?: string;
                           output?: unknown;
                         };
+                        const rows = Array.isArray(toolPart.output)
+                          ? toolPart.output.length
+                          : undefined;
+                        const running =
+                          toolPart.state !== undefined &&
+                          !toolPart.state.includes("available") &&
+                          !toolPart.state.includes("result");
                         return (
-                          <Box key={index}>
-                            <Text size="xs" c="dimmed" mb={4}>
+                          <Group key={index} gap={6} wrap="nowrap">
+                            {running ? (
+                              <Loader size="xs" />
+                            ) : (
+                              <IconDatabase size={14} aria-hidden="true" />
+                            )}
+                            <Text size="xs" c="dimmed">
+                              {running ? "Reading" : "Read"}{" "}
                               {toolPart.type.replace("tool-", "")}
-                              {toolPart.state ? ` — ${toolPart.state}` : ""}
+                              {rows !== undefined ? ` · ${rows} rows` : ""}
                             </Text>
-                            {toolPart.output !== undefined ? (
-                              <Code
-                                block
-                                style={{ maxHeight: 160, overflow: "auto" }}
-                              >
-                                {JSON.stringify(toolPart.output, null, 2)}
-                              </Code>
-                            ) : null}
-                          </Box>
+                          </Group>
                         );
                       }
                       return null;
@@ -197,7 +222,7 @@ export function ManagerAiAssistant({ rows }: ManagerAiAssistantProps) {
 
               {status === "error" ? (
                 <Text size="sm" c="red">
-                  {error?.message ?? "Ask AI failed. Check Bedrock config."}
+                  {error?.message ?? "Ask AI failed. Check Gemini config."}
                 </Text>
               ) : null}
             </Stack>

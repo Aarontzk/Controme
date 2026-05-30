@@ -13,7 +13,7 @@
     "daas:readiness": "node scripts/check-daas-readiness.mjs"
   },
   "dependencies": {
-    "@ai-sdk/amazon-bedrock": "^4.0.111",
+    "@ai-sdk/google": "^3.0.80",
     "@ai-sdk/react": "^3.0.195",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
@@ -64,6 +64,8 @@
     "next": "^16.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
     "sharp": "^0.34.5",
     "tailwind-merge": "^2.0.0",

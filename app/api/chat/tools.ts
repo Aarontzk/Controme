@@ -1,7 +1,7 @@
 /**
  * Ask AI — DaaS data tools
  *
- * Tools the Bedrock model can call to read the user's QC data. Every call
+ * Tools the Gemini model can call to read the user's QC data. Every call
  * forwards the signed-in user's Supabase JWT to DaaS via getAuthHeaders(),
  * so DaaS RBAC is enforced server-side — the model can only read what the
  * current manager is allowed to read.
