@@ -7,6 +7,12 @@ frontend:
         - pnpm install
     build:
       commands:
+        # Expose runtime-only secrets (non-NEXT_PUBLIC_) to the Next.js server
+        # runtime. Amplify env vars are build-time only by default; writing them
+        # into .env.production makes them available to API route Lambdas.
+        # See .agents/skills/amplify-env-vars/SKILL.md.
+        - if [ -n "$GOOGLE_GENERATIVE_AI_API_KEY" ]; then echo "GOOGLE_GENERATIVE_AI_API_KEY=$GOOGLE_GENERATIVE_AI_API_KEY" >> .env.production; fi
+        - if [ -n "$GEMINI_MODEL_ID" ]; then echo "GEMINI_MODEL_ID=$GEMINI_MODEL_ID" >> .env.production; fi
         - pnpm build
   artifacts:
     baseDirectory: .next
