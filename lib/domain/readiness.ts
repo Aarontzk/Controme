@@ -34,7 +34,7 @@ export interface DemoSeedReadiness {
 
 export const REQUIRED_DAAS_FIELDS = {
   products: ["version"],
-  qc_lots: ["warning_flag", "qc_stage", "reference_version"],
+  qc_lots: ["warning_flag", "qc_stage", "reference_version", "lot_code"],
 } as const;
 
 export function extractFieldNames(payload: unknown): string[] {

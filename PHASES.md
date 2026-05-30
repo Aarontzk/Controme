@@ -76,6 +76,7 @@ App = **Controme** (CV colour QC for Sima Arome). Domain locked from the PRD. Da
 - [x] Capture metadata fields: `qc_stage`, `lot_code`, `note`, warning band surfacing
 - [x] PPIC/manager dashboards with clearance summary, pass rate, Delta E trend, rejects/warnings
 - [x] Reference version history view + CSV/PDF lot export
-- [ ] Backend trigger for `product_reference_versions` on product edits (Farel dependency)
+- [x] Reference edits append `product_reference_versions`; generic product PATCH blocks reference
+      fields so the version history workflow cannot be bypassed
 
 ## Phases 4–5 — see copilot-instructions.md / create-project for deliverables

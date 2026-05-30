@@ -36,7 +36,26 @@ async function proxyRequest(
   id: string,
   method: string
 ) {
-  if (shouldBlockCollectionProxyMutation(collection, method)) {
+  let requestBody: ArrayBuffer | undefined;
+  let parsedJsonBody: unknown;
+  const shouldReadBody = method !== 'GET' && method !== 'HEAD' && method !== 'DELETE';
+
+  if (shouldReadBody) {
+    try {
+      const body = await request.arrayBuffer();
+      if (body.byteLength > 0) {
+        requestBody = body;
+        const contentType = request.headers.get('content-type') ?? '';
+        if (contentType.includes('application/json')) {
+          parsedJsonBody = JSON.parse(new TextDecoder().decode(body));
+        }
+      }
+    } catch {
+      // no body or non-JSON body
+    }
+  }
+
+  if (shouldBlockCollectionProxyMutation(collection, method, parsedJsonBody)) {
     return NextResponse.json(
       { errors: [{ message: immutableCollectionMessage(collection) }] },
       { status: 405 }
@@ -50,18 +69,13 @@ async function proxyRequest(
 
   const fetchOptions: RequestInit = { method, headers, cache: 'no-store' };
 
-  if (method !== 'GET' && method !== 'HEAD' && method !== 'DELETE') {
+  if (shouldReadBody) {
     const contentType = request.headers.get('content-type');
     if (contentType) {
       (fetchOptions.headers as Record<string, string>)['Content-Type'] =
         contentType;
     }
-    try {
-      const body = await request.arrayBuffer();
-      if (body.byteLength > 0) fetchOptions.body = body;
-    } catch {
-      // no body
-    }
+    if (requestBody) fetchOptions.body = requestBody;
   }
 
   const response = await fetch(url, fetchOptions);

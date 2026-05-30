@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  REQUIRED_DAAS_FIELDS,
   buildDemoSeedReadiness,
   buildSchemaReadinessCheck,
   extractFieldNames,
@@ -17,6 +18,10 @@ describe("extractFieldNames", () => {
 });
 
 describe("buildSchemaReadinessCheck", () => {
+  it("requires lot codes for demo-ready QC lot records", () => {
+    expect(REQUIRED_DAAS_FIELDS.qc_lots).toContain("lot_code");
+  });
+
   it("reports missing fields", () => {
     const check = buildSchemaReadinessCheck(
       "qc_lots",

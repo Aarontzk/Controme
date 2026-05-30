@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "daas:setup": "node scripts/setup-daas-rbac.mjs",
-    "daas:readiness": "node scripts/check-daas-readiness.mjs"
+    "daas:readiness": "node scripts/check-daas-readiness.mjs",
+    "daas:seed": "node scripts/seed-demo-lots.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.80",

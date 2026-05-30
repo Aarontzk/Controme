@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 const REQUIRED_FIELDS = {
   products: ["version"],
-  qc_lots: ["warning_flag", "qc_stage", "reference_version"],
+  qc_lots: ["warning_flag", "qc_stage", "reference_version", "lot_code"],
 };
 
 function loadEnvFile(path = ".env.local") {
