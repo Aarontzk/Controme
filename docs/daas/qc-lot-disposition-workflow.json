@@ -1,0 +1,107 @@
+{
+  "id": "a8c646f1-40d6-4323-8957-2e8362a1947c",
+  "name": "QC Lot Disposition",
+  "description": "Operational workflow for PPIC and manager disposition after a server-authoritative QC lot is recorded.",
+  "collection": "qc_lots",
+  "assignment_id": "c53b9f00-6dc7-4243-bcdf-24f56664ee80",
+  "workflow_json": {
+    "initial_state": "Recorded",
+    "states": [
+      {
+        "name": "Recorded",
+        "commands": [
+          {
+            "name": "Send to PPIC Review",
+            "next_state": "PPIC Review",
+            "policies": [],
+            "actions": []
+          }
+        ],
+        "isEndState": false
+      },
+      {
+        "name": "PPIC Review",
+        "commands": [
+          {
+            "name": "Release Lot",
+            "next_state": "Released",
+            "policies": [],
+            "actions": []
+          },
+          {
+            "name": "Place Quality Hold",
+            "next_state": "Quality Hold",
+            "policies": [],
+            "actions": []
+          }
+        ],
+        "isEndState": false
+      },
+      {
+        "name": "Quality Hold",
+        "commands": [
+          {
+            "name": "Escalate to Manager",
+            "next_state": "Manager Review",
+            "policies": [],
+            "actions": []
+          },
+          {
+            "name": "Close Hold",
+            "next_state": "Closed",
+            "policies": [],
+            "actions": []
+          }
+        ],
+        "isEndState": false
+      },
+      {
+        "name": "Manager Review",
+        "commands": [
+          {
+            "name": "Approve Exception Release",
+            "next_state": "Released",
+            "policies": [],
+            "actions": []
+          },
+          {
+            "name": "Close as Rejected",
+            "next_state": "Closed",
+            "policies": [],
+            "actions": []
+          }
+        ],
+        "isEndState": false
+      },
+      {
+        "name": "Released",
+        "commands": [
+          {
+            "name": "Reopen Review",
+            "next_state": "PPIC Review",
+            "policies": [],
+            "actions": []
+          }
+        ],
+        "isEndState": true
+      },
+      {
+        "name": "Closed",
+        "commands": [
+          {
+            "name": "Reopen Review",
+            "next_state": "PPIC Review",
+            "policies": [],
+            "actions": []
+          }
+        ],
+        "isEndState": true
+      }
+    ]
+  },
+  "backfill_summary": {
+    "Released": 45,
+    "Quality Hold": 32,
+    "PPIC Review": 3
+  }
+}

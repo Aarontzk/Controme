@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-05-29 - DaaS runtime extensions
+
+- Added live DaaS action extensions for backend-first business logic:
+  `qc-reference-autoversion` snapshots product reference edits into
+  `product_reference_versions`, and `qc-reject-notify` writes reject/warning
+  rows to `qc_notifications`.
+- Added the native DaaS `Product Reference Approval` workflow definition,
+  assignment to `products`, workflow fields on `products`, and backfilled the
+  two seeded products to `Approved Reference`.
+- Added native DaaS `QC Lot Disposition` and `QC Alert Resolution` workflows,
+  assigned them to `qc_lots` and `qc_notifications`, and backfilled existing
+  rows to 80 lot workflow instances plus 1 alert workflow instance.
+- Added `qc_notifications` read access for viewer policies and documented the
+  live DaaS automation code/config in `docs/daas/`, `docs/DAAS_EXTENSIONS.md`,
+  and `docs/DAAS_WORKFLOWS.md`.
+
 ## 2026-05-28 - App shell RBAC
 
 - Added the F1 authenticated app shell with Buildpad `ContentLayout` /

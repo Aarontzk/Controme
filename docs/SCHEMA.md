@@ -29,10 +29,15 @@ never direct browser→Supabase.
 | `warning_margin` | float | near-limit warning band fraction; default `0.10` |
 | `rgb_approx` | string | `#RRGGBB` for UI preview only |
 | `active` | boolean | reference in use |
+| `workflow_instance` | uuid m2o -> `daas_wf_instance` | DaaS workflow instance for reference approval |
+| `workflow_state` | string | current Product Reference Approval state |
 
-Reference edits are versioned (FR-03) → `product_reference_versions`.
+Reference edits are versioned (FR-03) through the DaaS
+`qc-reference-autoversion` action extension -> `product_reference_versions`.
 The admin product page derives `ref_l/a/b` from a reference photo or RGB picker, then writes
 the normalized reference values through the versioned update route.
+Reference lifecycle is tracked by the DaaS `Product Reference Approval` workflow; see
+[DAAS_WORKFLOWS.md](DAAS_WORKFLOWS.md).
 
 ### `qc_lots` — immutable QC check records (FR-02, PRD §4.3)
 
@@ -51,6 +56,8 @@ Field names below match the live DaaS collection.
 | `warning_flag` | boolean | true when passing Delta E is >90% and <=100% of `delta_e_max` |
 | `qc_stage` | enum | `incoming` / `finish` traceability stage |
 | `reference_version` | integer | product reference version used for this measurement |
+| `workflow_instance` | uuid m2o -> `daas_wf_instance` | DaaS workflow instance for lot disposition |
+| `workflow_state` | string | current QC Lot Disposition state |
 | `channel_flags` | json | channels outside tolerance (explanatory) |
 | `contaminant_ratio` | float | foreign-object pixel ratio in ROI (contamination lane) |
 | `brightness_stddev` | float | powder brightness std dev (consistency lane) |
@@ -68,8 +75,34 @@ never trusted for the stored verdict.
 
 ### `product_reference_versions` — reference history (FR-03)
 
-`id`, `product_id` (m2o), `ref_l/a/b`, `tol_l/a/b`, `delta_e_max`, `changed_by`, `changed_at`,
-`reason`. One row per reference change, append-only.
+`id`, `product_id` (m2o), `ref_l/a/b`, `tol_l/a/b`, `delta_e_max`, `user_created`,
+`date_created`, `reason`. One row per reference change, append-only.
+
+Created by the DaaS `qc-reference-autoversion` action hook on
+`products.items.update` whenever reference Lab, tolerance, or threshold fields
+change. The snapshot code is stored in
+[`docs/daas/qc-reference-autoversion.js`](daas/qc-reference-autoversion.js).
+
+### `qc_notifications` - QC alerts (FR-04)
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `lot_id` | m2o -> `qc_lots` | lot that triggered the notification |
+| `product_id` | m2o -> `products` | product for filtering/dashboard display |
+| `level` | enum/string | `alert` for reject, `warning` for warning-band pass |
+| `status` | enum/string | copied from `qc_lots.status` |
+| `delta_e` | float | copied from `qc_lots.delta_e` |
+| `message` | string | generated dashboard message |
+| `read` | boolean | false until acknowledged |
+| `date_created` | datetime | DaaS special field |
+| `workflow_instance` | uuid m2o -> `daas_wf_instance` | DaaS workflow instance for alert resolution |
+| `workflow_state` | string | current QC Alert Resolution state |
+
+Rows are created by the DaaS `qc-reject-notify` action hook on
+`qc_lots.items.create`; the client should read them, not create them directly.
+The snapshot code is stored in
+[`docs/daas/qc-reject-notify.js`](daas/qc-reject-notify.js).
 
 ### Users & roles (RBAC — 4 roles)
 

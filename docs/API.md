@@ -56,7 +56,10 @@ also blocks direct writes to immutable collections:
 - `qc_lots`: `POST`, `PATCH`, and `DELETE` are rejected here. Create records
   through `POST /api/qc/lots` so the server recomputes QC results from the photo.
 - `product_reference_versions`: direct writes are rejected here. Reference
-  history is appended only by `PATCH /api/qc/products/[id]/update-reference`.
+  history is appended by the DaaS `qc-reference-autoversion` extension when
+  product reference fields change.
+- `qc_notifications`: clients read notification rows; creation is handled by
+  the DaaS `qc-reject-notify` extension after `qc_lots` creates.
 
 ## Metadata And Permission Routes
 
@@ -86,7 +89,7 @@ also blocks direct writes to immutable collections:
 | `GET` | `/api/qc/export` | CSV COA/history export for manager/admin demo flows. |
 | `GET` | `/api/qc/schema-readiness` | Checks whether live DaaS schema has the fields required by the backend code. |
 | `GET` | `/api/qc/demo-readiness` | Checks whether seeded demo lots cover pass/reject/warning and incoming/finish stages. |
-| `PATCH` | `/api/qc/products/[id]/update-reference` | Admin reference update that appends `product_reference_versions` before patching `products`. |
+| `PATCH` | `/api/qc/products/[id]/update-reference` | Admin reference update that patches `products`; DaaS appends `product_reference_versions` via extension. |
 
 `POST /api/qc/lots` accepts `multipart/form-data`:
 

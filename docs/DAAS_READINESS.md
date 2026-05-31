@@ -38,6 +38,32 @@ The code writes these fields during QC capture and reference updates:
 If any field is missing, `POST /api/qc/lots` or the reference update route can fail even though
 TypeScript, lint, and build pass locally.
 
+## Required Runtime Extensions
+
+DaaS backend-first logic used by the current QC flow:
+
+| Extension | Event | Expected effect |
+|---|---|---|
+| `qc-reference-autoversion` | `products.items.update` | Creates a `product_reference_versions` snapshot when reference fields change. |
+| `qc-reject-notify` | `qc_lots.items.create` | Creates a `qc_notifications` alert for reject lots or warning for warning-band lots. |
+
+Snapshots of the live extension code are stored in `docs/daas/`; operational
+notes and verification evidence are in [DAAS_EXTENSIONS.md](DAAS_EXTENSIONS.md).
+
+## Required Workflow Definition
+
+The Buildpad Automation > Workflows page should show these workflow definitions:
+
+| Workflow | Collection | Expected instances |
+|---|---|---|
+| `Product Reference Approval` | `products` | one instance per seeded product, currently both `Approved Reference` |
+| `QC Lot Disposition` | `qc_lots` | one instance per existing lot; pass lots start `Released`, reject lots start `Quality Hold`, warning lots start `PPIC Review` |
+| `QC Alert Resolution` | `qc_notifications` | one instance per notification; unread alerts start `Open Alert` |
+
+The workflows add `workflow_instance` and `workflow_state` to their assigned
+collections. Operational notes and JSON snapshots are in
+[DAAS_WORKFLOWS.md](DAAS_WORKFLOWS.md).
+
 ## Runtime Verification
 
 Run the app with real `.env.local` values, log in as a manager/admin account, then open:

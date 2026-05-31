@@ -92,34 +92,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const currentVersion = typeof product.version === "number" ? product.version : 1;
-    const versionBody = {
-      product_id: id,
-      ref_l: product.ref_l,
-      ref_a: product.ref_a,
-      ref_b: product.ref_b,
-      tol_l: product.tol_l,
-      tol_a: product.tol_a,
-      tol_b: product.tol_b,
-      delta_e_max: product.delta_e_max,
-      changed_by: user?.id ?? null,
-      changed_at: new Date().toISOString(),
-      reason: body.data.reason,
-    };
-
-    const versionRes = await fetch(`${daasUrl}/api/items/product_reference_versions`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(versionBody),
-      cache: "no-store",
-    });
-    if (!versionRes.ok) {
-      const detail = await versionRes.text();
-      return jsonError(
-        `Failed to create reference version: ${detail.slice(0, 200)}`,
-        versionRes.status
-      );
-    }
-
     const { reason: _reason, ...referenceUpdate } = body.data;
     const updateRes = await fetch(`${daasUrl}/api/items/products/${id}`, {
       method: "PATCH",

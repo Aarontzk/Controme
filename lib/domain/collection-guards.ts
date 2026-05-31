@@ -16,7 +16,7 @@ export function immutableCollectionMessage(collection: string): string {
   }
 
   if (collection === "product_reference_versions") {
-    return "Product reference versions are append-only and may only be written by the reference update workflow.";
+    return "Product reference versions are append-only and may only be written by the DaaS reference update extension.";
   }
 
   return "This collection is write-locked through the generic proxy.";

@@ -85,12 +85,12 @@ export default function AdminProductDetailPage() {
               <CollectionList
                 collection="product_reference_versions"
                 fields={[
-                  "changed_at",
+                  "date_created",
                   "ref_l",
                   "ref_a",
                   "ref_b",
                   "delta_e_max",
-                  "changed_by",
+                  "user_created",
                   "reason"
                 ]}
                 filter={{ product_id: { _eq: id } }}
