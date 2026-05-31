@@ -15,9 +15,9 @@ runtime extensions, and workflows.
 
 ## Live Demo
 
-- Production: _TBA after final deploy_
-- Demo video: _TBA_
-- Pitch deck: _TBA_
+- Production: https://main.dpvw4kb04hrwl.amplifyapp.com/
+- Demo video: https://youtu.be/l95T9xWPv3s?si=ld_PncZisgFBZggA
+- Pitch deck: https://www.canva.com/design/DAHLJMyMVq4/09JpMXuUuvlMYUCp9khQCQ/edit
 
 ## Features
 
@@ -145,8 +145,8 @@ Tracking 8 components per CyberHack rubric:
 |---|---|
 | Aludra | UI/UX Designer |
 | Salsa | Concept & Market Researcher |
-| Azka | Project Manager + Frontend Engineer |
-| Farel | Backend Engineer |
+| Azka | AI/Vision + Frontend Engineer |
+| Farel | Backend Engineer & System Manager |
 
 ## AI-Assisted Development (Claude Code + Codex)
 
