@@ -53,6 +53,19 @@ interface SavedLotResult {
   warningFlag?: boolean;
 }
 
+interface SaveLotResponse {
+  success?: boolean;
+  error?: string;
+  data?: { id?: string };
+  result?: {
+    status: "pass" | "reject";
+    deltaE: number;
+    failedLanes: string[];
+    lightingWarnings: string[];
+    warningFlag?: boolean;
+  };
+}
+
 function getRgbCss(rgb: RgbColor): string {
   return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
 }
@@ -190,20 +203,25 @@ export function ColorQcCapture({
       body.append("lotCode", lotCode.trim());
       body.append("note", note.trim());
       const response = await fetch("/api/qc/lots", { method: "POST", body });
-      const json = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-        data?: { id?: string };
-        result?: {
-          status: "pass" | "reject";
-          deltaE: number;
-          failedLanes: string[];
-          lightingWarnings: string[];
-          warningFlag?: boolean;
-        };
-      };
+      // Read as text first: an infra-level failure (Lambda crash, payload/timeout)
+      // returns a plaintext body like "Internal Server Error", not JSON. Blindly
+      // calling response.json() on that throws a misleading "Unexpected token" error
+      // and hides the real status, so parse defensively and surface what we got.
+      const raw = await response.text();
+      let json: SaveLotResponse;
+      try {
+        json = raw ? (JSON.parse(raw) as SaveLotResponse) : {};
+      } catch {
+        throw new Error(
+          `Server error ${response.status}: ${
+            raw.trim().slice(0, 140) || response.statusText || "non-JSON response"
+          }`
+        );
+      }
       if (!response.ok || !json.success || !json.result) {
-        throw new Error(json.error ?? "Failed to save QC lot.");
+        throw new Error(
+          json.error ?? `Failed to save QC lot (HTTP ${response.status}).`
+        );
       }
       setSavedLot({
         lotId: json.data?.id ?? null,

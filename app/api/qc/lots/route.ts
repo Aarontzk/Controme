@@ -19,8 +19,16 @@ import {
   round,
   type DaasProductRow,
 } from "@/lib/domain";
-import { analyzeSampleImage } from "@/lib/vision/image-pipeline.server";
+import type { ServerSampleResult } from "@/lib/vision/image-pipeline.server";
 import { qcLotUploadSchema, validatePhoto } from "@/lib/vision/validation";
+
+// Photo decode (sharp) + several sequential DaaS round-trips (product, file
+// upload, users/me, lot create) can be slow on a cold start. Raise the function
+// timeout so a slow-but-working request is not killed mid-flight and turned into
+// a plaintext "Internal Server Error". (sharp is already external by Next default;
+// this does not change that.)
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ success: false, error: message }, { status });
@@ -72,9 +80,24 @@ export async function POST(request: NextRequest) {
     const referenceVersion =
       typeof productJson.data.version === "number" ? productJson.data.version : 1;
 
-    // Server-authoritative recompute from the photo bytes.
+    // Server-authoritative recompute from the photo bytes. The image engine
+    // (sharp, a native addon) is imported dynamically so that if its platform
+    // binary fails to load on the serverless host, the failure is caught here and
+    // returned as a readable JSON error — instead of crashing at module load and
+    // letting the platform return a plaintext "Internal Server Error" (which the
+    // client then mis-reports as "Unexpected token 'I'").
     const buffer = Buffer.from(await photo.arrayBuffer());
-    const sample = await analyzeSampleImage(buffer);
+    let sample: ServerSampleResult;
+    try {
+      const { analyzeSampleImage } = await import(
+        "@/lib/vision/image-pipeline.server"
+      );
+      sample = await analyzeSampleImage(buffer);
+    } catch (engineError) {
+      const detail =
+        engineError instanceof Error ? engineError.message : String(engineError);
+      return jsonError(`Image engine failed (sharp): ${detail}`, 500);
+    }
     const evaluation = evaluateSample(product, sample.lab);
 
     const failedLanes: string[] = [];
