@@ -1,5 +1,8 @@
 import { Box, Container, Stack, Text, Title } from "@mantine/core";
 import { ManagerDashboard } from "@/components/dashboard/QcDashboards";
+import { ManagerNotifications } from "@/components/dashboard/ManagerNotifications";
+import { SystemHealthWidget } from "@/components/dashboard/SystemHealthWidget";
+import { DailyStatsStrip } from "@/components/dashboard/DailyStatsStrip";
 
 export default function ManagerDashboardPage() {
   return (
@@ -16,6 +19,9 @@ export default function ManagerDashboardPage() {
             Pass rate, trend Delta E, lot REJECT, dan warning band.
           </Text>
         </Box>
+        <SystemHealthWidget />
+        <ManagerNotifications />
+        <DailyStatsStrip />
         <ManagerDashboard />
       </Stack>
     </Container>
