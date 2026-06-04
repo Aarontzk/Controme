@@ -30,6 +30,11 @@ Both read the same instructions (`AGENTS.md` ⇄ `CLAUDE.md`) and the same skill
   conflicts locally, never force-push shared branches.
 - **One source of truth for instructions.** Edit `AGENTS.md`; `CLAUDE.md` imports it.
 
+> **🤝 Active task board — read before starting work.** Claude Code is the
+> coordinator. Your current task, branch, and the files Claude owns (do not edit
+> them) live in [`CODEX_TASKS.md`](CODEX_TASKS.md). Read it first so the two
+> agents never edit the same file. Update its **Status** line when you start/finish.
+
 ---
 
 ## 1. Stack — Buildpad RAD Platform
