@@ -10,10 +10,51 @@ configuration so the setup can be recreated for another environment.
 |---|---|---|---|
 | `qc-reference-autoversion` | `products.items.update` | action | FR-03: append a row to `product_reference_versions` when reference Lab/tolerance/threshold fields change. |
 | `qc-reject-notify` | `qc_lots.items.create` | action | FR-04: append a `qc_notifications` alert/warning when a reject or warning-band lot is created. |
+| `qc-lots-validate-create` | `qc_lots.items.create` | filter | Server-side validation (defence-in-depth): rejects structurally invalid measurements (missing product, non-finite L\*a\*b\*, negative ΔE, bad status, reject without reason). |
+| `qc-lots-no-update` | `qc_lots.items.update` | filter | Append-only guard: blocks UPDATE on `qc_lots`. |
+| `qc-lots-no-delete` | `qc_lots.items.delete` | filter | Append-only guard: blocks DELETE on `qc_lots`. |
+| `refversions-no-update` | `product_reference_versions.items.update` | filter | Append-only guard: blocks UPDATE on reference history. |
+| `refversions-no-delete` | `product_reference_versions.items.delete` | filter | Append-only guard: blocks DELETE on reference history. |
+| `audit-archive-no-update` | `audit_archive.items.update` | filter | Append-only guard: blocks UPDATE on the off-table audit copy. |
+| `audit-archive-no-delete` | `audit_archive.items.delete` | filter | Append-only guard: blocks DELETE on the off-table audit copy. |
 
-Both extensions use DaaS item services with `{ elevated: true }`. The extension
-logic is the authority for these derived rows, while DaaS still records the
-originating user in audit fields/activity logs.
+The two `action` extensions use DaaS item services with `{ elevated: true }` and are
+the authority for their derived rows. The `filter` extensions are **blocking**: they
+run before the operation and cancel it by throwing. DaaS still records the originating
+user in audit fields/activity logs for every attempt.
+
+## Append-only guards (immutable audit trail)
+
+`qc_lots`, `product_reference_versions`, and `audit_archive` are immutable. Six filter
+hooks (snapshot: `docs/daas/append-only-guards.js`) reject every UPDATE/DELETE at the
+DaaS layer — defence-in-depth behind the Next proxy guard
+`lib/domain/collection-guards.ts`. They guard the items API / MCP surface; direct
+`services.supabase` (service-role) writes used by crons are intentionally not blocked,
+which is why `qc-audit-archive` can still insert. Verified 2026-06-03: a direct
+`items.update` on a `qc_lots` row returns
+`"qc_lots is append-only: UPDATE is blocked."`, and an invalid create returns the
+`qc-lots-validate-create` error list.
+
+## Scheduled jobs (cron)
+
+Snapshots in `docs/daas/`. All active; quiet/idempotent by design.
+
+| Job | Schedule (tz) | Purpose | Writes |
+|---|---|---|---|
+| `qc-daily-cta-brief` | `0 1 * * *` (WIB) | Ranked manager call-to-action from a rules engine over the last 24h vs 7-day baseline. | `qc_notifications` (`status='digest'`) |
+| `qc-integrity-watch` | `0 * * * *` (WIB) | Hourly tamper/anomaly scan of `daas_activity`. | `qc_notifications` (`status='integrity'`) |
+| `qc-heartbeat` | `*/10 * * * *` (UTC) | Health + data-freshness sample; self-prunes 7d. | `system_health` |
+| `qc-audit-archive` | `30 1 * * *` (WIB) | Off-table copy of yesterday's `daas_activity` before the 90-day purge. | `audit_archive` |
+| `qc-daily-stats` | `30 0 * * *` (WIB) | Precomputed daily KPI rollup. | `qc_daily_stats` |
+| `activity-housekeeping` | `0 2 * * *` (UTC) | Purges `daas_activity` older than `activity_retention_days` (default 90). | — |
+
+## Observability & compliance collections
+
+| Collection | Written by | Purpose |
+|---|---|---|
+| `system_health` | `qc-heartbeat` | Heartbeat + latency + freshness samples (auto-pruned 7d). Read by the manager System Health widget. |
+| `audit_archive` | `qc-audit-archive` | Permanent off-table copy of `daas_activity` (survives the 90-day purge). |
+| `qc_daily_stats` | `qc-daily-stats` | One precomputed KPI rollup row per day. Read by the manager dashboard (precomputed-first, live fallback). |
 
 ## Supporting Collection
 
