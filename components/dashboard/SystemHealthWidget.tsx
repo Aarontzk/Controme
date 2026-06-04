@@ -60,10 +60,13 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function minuteLabel(value: number | null | undefined): string {
   if (value == null) return "—";
-  if (value < 60) return `${value} min ago`;
-  const hours = Math.floor(value / 60);
-  const mins = value % 60;
-  return mins ? `${hours}h ${mins}m ago` : `${hours}h ago`;
+  // Clamp clock-skew negatives (a lot timestamped slightly ahead of "now").
+  const mins = Math.max(0, value);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  const rem = mins % 60;
+  return rem ? `${hours}h ${rem}m ago` : `${hours}h ago`;
 }
 
 export function SystemHealthWidget() {

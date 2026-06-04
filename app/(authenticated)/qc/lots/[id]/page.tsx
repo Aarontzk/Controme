@@ -103,10 +103,14 @@ async function fetchLot(id: string): Promise<QcLotDetail | null> {
   if (!headers.Authorization) return null;
 
   const daasUrl = getDaaSUrl();
-  const response = await fetch(`${daasUrl}/api/items/qc_lots/${id}`, {
-    headers,
-    cache: "no-store"
-  });
+  // Expand operator_id so the record shows the operator's account (email/name)
+  // instead of a raw UUID.
+  const fields =
+    "*,operator_id.id,operator_id.email,operator_id.first_name,operator_id.last_name";
+  const response = await fetch(
+    `${daasUrl}/api/items/qc_lots/${id}?fields=${encodeURIComponent(fields)}`,
+    { headers, cache: "no-store" }
+  );
   if (response.status === 404) return null;
   if (!response.ok) throw new Error("Failed to load QC lot.");
 
