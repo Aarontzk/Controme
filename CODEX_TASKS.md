@@ -54,7 +54,7 @@ Separate folder = separate git HEAD/index → true parallel branches.
 - Search narrows the list live; category + active filters combine; empty state
   handled. lint + tsc + tests green. PR opened to `main`.
 
-**Status:** UNCLAIMED  _(Codex: set `IN-PROGRESS feature/products-search-codex`
+**Status:** IN-PROGRESS feature/products-search-codex  _(Codex: set `IN-PROGRESS feature/products-search-codex`
 when you start, `DONE PR #<n>` when merged.)_
 
 ---
