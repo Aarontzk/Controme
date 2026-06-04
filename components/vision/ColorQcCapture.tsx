@@ -388,7 +388,7 @@ export function ColorQcCapture({
 
           <Input
             label="Lot Number (opsional)"
-            placeholder="Kosongkan → otomatis LOT-YYYYMMDD-NNN"
+            placeholder="Kosongkan → otomatis per produk, mis. GIN-0001"
             value={lotCode}
             onChange={(value) => setLotCode(String(value ?? ""))}
             trim
