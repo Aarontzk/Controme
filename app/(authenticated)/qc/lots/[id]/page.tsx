@@ -1,4 +1,5 @@
 import {
+  Anchor,
   Badge,
   Box,
   Container,
@@ -10,6 +11,8 @@ import {
   Text,
   Title
 } from "@mantine/core";
+import { IconArrowLeft } from "@tabler/icons-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { LotExportActions } from "@/components/export/LotExportActions";
@@ -51,6 +54,20 @@ function formatNumber(value: number | null | undefined, digits = 2): string {
   return typeof value === "number" && Number.isFinite(value)
     ? value.toFixed(digits)
     : "-";
+}
+
+// QC operates on Asia/Jakarta (WIB) — format deterministically in that zone so
+// the record reads the same regardless of where the page is rendered.
+function formatTimestamp(value: string | null | undefined): string {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  const formatted = new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Jakarta"
+  }).format(date);
+  return `${formatted} WIB`;
 }
 
 function getRelatedLabel(
@@ -129,6 +146,16 @@ export default async function QcLotDetailPage({ params }: PageProps) {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
+        <Anchor
+          component={Link}
+          href="/qc/lots"
+          size="sm"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+        >
+          <IconArrowLeft size={16} />
+          Back to QC Lot History
+        </Anchor>
+
         <Paper withBorder p="md" radius="md" style={panelStyle(status)}>
           <Group justify="space-between" align="flex-start">
             <Box>
@@ -170,11 +197,11 @@ export default async function QcLotDetailPage({ params }: PageProps) {
             <Paper withBorder p="md" radius="md" style={panelStyle()}>
               <Stack gap="xs">
                 <Text fw={700}>Lot identity</Text>
-                <Text>Lot code: {lot.lot_code || lot.id}</Text>
+                <Text>Lot code: {lot.lot_code || "—"}</Text>
                 <Text>QC stage: {lot.qc_stage ?? "-"}</Text>
                 <Text>Product: {getRelatedLabel(lot.product_id)}</Text>
                 <Text>Operator: {getRelatedLabel(lot.operator_id)}</Text>
-                <Text>Timestamp: {lot.checked_at ?? "-"}</Text>
+                <Text>Timestamp: {formatTimestamp(lot.checked_at)}</Text>
               </Stack>
             </Paper>
 
