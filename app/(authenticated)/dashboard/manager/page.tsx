@@ -3,6 +3,7 @@ import { ManagerDashboard } from "@/components/dashboard/QcDashboards";
 import { ManagerNotifications } from "@/components/dashboard/ManagerNotifications";
 import { SystemHealthWidget } from "@/components/dashboard/SystemHealthWidget";
 import { DailyStatsStrip } from "@/components/dashboard/DailyStatsStrip";
+import { SpcPanel } from "@/components/dashboard/SpcPanel";
 
 export default function ManagerDashboardPage() {
   return (
@@ -22,6 +23,7 @@ export default function ManagerDashboardPage() {
         <SystemHealthWidget />
         <ManagerNotifications />
         <DailyStatsStrip />
+        <SpcPanel />
         <ManagerDashboard />
       </Stack>
     </Container>
