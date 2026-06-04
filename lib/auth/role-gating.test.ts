@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { getMenuForRoles, getRoleNames, requireRole } from "./role-gating";
+import {
+  getLandingHref,
+  getMenuForRoles,
+  getRoleNames,
+  requireRole,
+} from "./role-gating";
 
 describe("role gating", () => {
   it("maps DaaS user role payloads to app roles", () => {
@@ -35,6 +40,13 @@ describe("role gating", () => {
     expect(getRoleNames({ admin_access: true })).toEqual(["admin"]);
   });
 
+  it("maps generic and pending users to the approval role", () => {
+    expect(getRoleNames({ roles: [{ name: "User" }] })).toEqual(["pending_approval"]);
+    expect(getRoleNames({ roles: [{ name: "pending_approval" }] })).toEqual([
+      "pending_approval",
+    ]);
+  });
+
   it("allows admin through every frontend role gate", () => {
     expect(requireRole(["admin"], ["manager"])).toBe(true);
   });
@@ -58,5 +70,13 @@ describe("role gating", () => {
       "/dashboard/manager",
       "/qc/lots",
     ]);
+  });
+
+  it("lands pending users on the approval page", () => {
+    expect(getLandingHref(["pending_approval"])).toBe("/approval");
+  });
+
+  it("lets operational roles override pending approval", () => {
+    expect(getLandingHref(["pending_approval", "qc_operator"])).toBe("/qc/capture");
   });
 });

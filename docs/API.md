@@ -26,6 +26,7 @@ the DaaS response unchanged.
 | Method | Route | Purpose |
 |---|---|---|
 | `POST` | `/api/auth/login` | Login with email/password through Supabase Auth. |
+| `POST` | `/api/auth/signup` | Create an email/password account, provision default `pending_approval` DaaS role, and sign in. |
 | `GET` | `/api/auth/user` | Return current user profile; tries DaaS `/api/users/me`, falls back to Supabase user. |
 | `GET` | `/api/auth/callback` | Handle auth callback and session exchange. |
 | `POST` | `/api/auth/logout` | Clear Supabase session. |
@@ -38,6 +39,20 @@ the DaaS response unchanged.
   "password": "********"
 }
 ```
+
+`POST /api/auth/signup` body:
+
+```json
+{
+  "email": "new-user@example.com",
+  "password": "minimum-8-characters"
+}
+```
+
+New email/password signups are created server-side with email confirmed and a
+default `pending_approval` DaaS role. Admin/PPIC/manager/operator access must
+still be granted through DaaS RBAC, not self-service signup. Pending users land
+on `/approval` until an admin assigns an operational role.
 
 ## DaaS Collection Routes
 

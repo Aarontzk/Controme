@@ -7,6 +7,7 @@ import { getRoleNames, type AppRole, type UserRoleSource } from "./role-gating";
 interface AppRolesState {
   roles: AppRole[];
   isAdmin: boolean;
+  authenticated: boolean;
   loading: boolean;
 }
 
@@ -26,6 +27,7 @@ export function useAppRoles(): AppRolesState {
   const [state, setState] = useState<AppRolesState>({
     roles: [],
     isAdmin: false,
+    authenticated: false,
     loading: true,
   });
 
@@ -39,16 +41,25 @@ export function useAppRoles(): AppRolesState {
           cache: "no-store",
         });
         if (!response.ok) {
-          if (active) setState({ roles: [], isAdmin: false, loading: false });
+          if (active) {
+            setState({ roles: [], isAdmin: false, authenticated: false, loading: false });
+          }
           return;
         }
         const json = (await response.json()) as { data?: UserRoleSource };
         const roles = getRoleNames(json.data);
         if (active) {
-          setState({ roles, isAdmin: roles.includes("admin"), loading: false });
+          setState({
+            roles,
+            isAdmin: roles.includes("admin"),
+            authenticated: true,
+            loading: false,
+          });
         }
       } catch {
-        if (active) setState({ roles: [], isAdmin: false, loading: false });
+        if (active) {
+          setState({ roles: [], isAdmin: false, authenticated: false, loading: false });
+        }
       }
     }
 

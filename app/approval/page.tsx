@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Avatar,
   Box,
@@ -10,16 +9,22 @@ import {
   Modal,
   Stack,
   Text,
+  ThemeIcon,
+  Title,
   UnstyledButton,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
+  IconClockHour4,
   IconLogin2,
   IconLogout,
   IconPlus,
   IconUserCircle,
 } from "@tabler/icons-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import darkLogo from "@/assets/dark logo.png";
 import { DEMO_ACCOUNTS, DEMO_LOGIN_ENABLED } from "@/lib/auth/demo-accounts";
 import {
   getRecentAccounts,
@@ -40,11 +45,7 @@ const ACCOUNT_DESCRIPTIONS: Record<string, string> = {
   operator: "QC capture workflow",
 };
 
-interface NavFooterProps {
-  roles: string[];
-}
-
-export function NavFooter({ roles }: NavFooterProps) {
+export default function ApprovalPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -52,9 +53,6 @@ export function NavFooter({ roles }: NavFooterProps) {
   const [currentEmail, setCurrentEmail] = useState<string | null>(null);
   const [recentAccounts, setRecentAccounts] =
     useState<RecentAccount[]>(getRecentAccounts);
-
-  const primary = roles[0];
-  const roleLabel = primary ? ROLE_LABELS[primary] ?? primary : "Account";
 
   useEffect(() => {
     let active = true;
@@ -71,11 +69,9 @@ export function NavFooter({ roles }: NavFooterProps) {
           data?: { email?: string | null };
         };
         const email = json.data?.email;
-        if (!email || !active) return;
-
-        setCurrentEmail(email);
+        if (active && email) setCurrentEmail(email.toLowerCase());
       } catch {
-        // Recent account storage is an enhancement; ignore failures.
+        // Account switching still works with remembered/demo accounts.
       }
     }
 
@@ -85,24 +81,30 @@ export function NavFooter({ roles }: NavFooterProps) {
     };
   }, []);
 
-  async function logout(): Promise<void> {
-    if (loading) return;
+  const demoAccountsByEmail = useMemo(() => {
+    return new Map(
+      DEMO_ACCOUNTS.map((account) => [account.email.toLowerCase(), account]),
+    );
+  }, []);
+
+  const manualRecentAccounts = recentAccounts.filter(
+    (account) => !demoAccountsByEmail.has(account.email.toLowerCase()),
+  );
+
+  async function handleLogout() {
     setLoading(true);
-    let next = "/login";
     try {
-      const res = await fetch("/api/auth/logout", { method: "POST" });
-      const json = (await res.json().catch(() => null)) as {
-        data?: { idpLogoutUrl?: string | null };
-      } | null;
-      if (json?.data?.idpLogoutUrl) next = json.data.idpLogoutUrl;
-    } catch {
-      // Stay on the normal login redirect when logout cannot return JSON.
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      router.replace("/login");
+      router.refresh();
     }
-    router.push(next);
-    router.refresh();
   }
 
-  async function switchAccount(accountId: string): Promise<void> {
+  async function switchDemoAccount(accountId: string): Promise<void> {
     if (loading || switchingId) return;
 
     const account = DEMO_ACCOUNTS.find((item) => item.id === accountId);
@@ -120,7 +122,7 @@ export function NavFooter({ roles }: NavFooterProps) {
         credentials: "include",
       });
 
-      const data = await response.json().catch(() => null) as {
+      const data = (await response.json().catch(() => null)) as {
         errors?: { message?: string }[];
       } | null;
 
@@ -134,8 +136,7 @@ export function NavFooter({ roles }: NavFooterProps) {
         color: "green",
       });
 
-      setCurrentEmail(account.email);
-      setSwitcherOpen(false);
+      router.replace("/");
       router.refresh();
     } catch (error) {
       notifications.show({
@@ -154,114 +155,84 @@ export function NavFooter({ roles }: NavFooterProps) {
     setLoading(true);
 
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } catch {
-      // The login page can still replace the session if logout response fails.
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
     } finally {
-      router.push(`/login?email=${encodeURIComponent(email)}&remember=1`);
+      router.replace(`/login?email=${encodeURIComponent(email)}&remember=1`);
       router.refresh();
     }
   }
 
-  function addAccount(path: "/login" | "/signup"): void {
-    setSwitcherOpen(false);
-    router.push(path);
+  async function addAccount(path: "/login" | "/signup"): Promise<void> {
+    setLoading(true);
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      router.replace(path);
+      router.refresh();
+    }
   }
 
-  const demoAccountsByEmail = useMemo(() => {
-    return new Map(DEMO_ACCOUNTS.map((account) => [account.email.toLowerCase(), account]));
-  }, []);
-
-  const manualRecentAccounts = recentAccounts.filter(
-    (account) => !demoAccountsByEmail.has(account.email.toLowerCase()),
-  );
-
   return (
-    <>
-      <Box
-        mt="auto"
-        style={{
-          flexShrink: 0,
-          paddingTop: "var(--ds-spacing-3)",
-        }}
-      >
-        <Box
-          style={{
-            background:
-              "color-mix(in srgb, var(--mantine-color-body) 88%, transparent)",
-            border: "1px solid var(--ds-border-color)",
-            borderRadius: 8,
-            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-            padding: "var(--ds-spacing-3)",
-          }}
-        >
-          <Group gap="sm" wrap="nowrap" mb="var(--ds-spacing-3)">
-            <Avatar
-              color="primary"
-              radius="xl"
-              size={38}
-              style={{
-                border:
-                  "1px solid color-mix(in srgb, var(--ds-primary) 18%, transparent)",
-              }}
-            >
-              {roleLabel.slice(0, 1).toUpperCase()}
-            </Avatar>
-            <Stack gap={2} style={{ minWidth: 0 }}>
-              <Text size="sm" fw={700} truncate>
-                {roleLabel}
-              </Text>
-              <Text size="xs" c="dimmed">
-                Signed in
-              </Text>
-            </Stack>
-          </Group>
-
-          <Group gap="xs" wrap="nowrap">
-            <Button
-              variant="light"
-              color="primary"
-              size="xs"
-              fullWidth
-              radius={8}
-              leftSection={<IconUserCircle size={15} />}
-              loading={Boolean(switchingId)}
-              onClick={() => {
-                setRecentAccounts(getRecentAccounts());
-                setSwitcherOpen(true);
-              }}
-              styles={{
-                root: {
-                  fontWeight: 650,
-                  transition: "background 150ms ease, transform 150ms ease",
-                },
-                section: { marginRight: 6 },
-              }}
-            >
-              Switch account
-            </Button>
-            <Button
-              variant="subtle"
-              color="red"
-              size="xs"
-              fullWidth
-              radius={8}
-              leftSection={<IconLogout size={15} />}
-              loading={loading}
-              onClick={logout}
-              styles={{
-                root: {
-                  fontWeight: 650,
-                  transition: "background 150ms ease, transform 150ms ease",
-                },
-                section: { marginRight: 6 },
-              }}
-            >
-              Sign out
-            </Button>
-          </Group>
-        </Box>
-      </Box>
+    <Box
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "var(--ds-spacing-6)",
+        background: "var(--ds-surface-white)",
+      }}
+    >
+      <Stack align="center" gap="var(--ds-spacing-5)" style={{ maxWidth: 520 }}>
+        <Image
+          src={darkLogo}
+          alt="Controme"
+          width={148}
+          priority
+          style={{ height: "auto", width: "min(148px, 56vw)" }}
+        />
+        <ThemeIcon size={64} radius="xl" color="yellow" variant="light">
+          <IconClockHour4 size={34} />
+        </ThemeIcon>
+        <Stack align="center" gap="var(--ds-spacing-2)">
+          <Title order={1} ta="center" style={{ color: "var(--ds-primary)" }}>
+            Waiting for approval
+          </Title>
+          <Text ta="center" c="var(--ds-text-muted)">
+            Your account has been created, but an admin needs to assign your
+            Controme role before you can access your dashboard workspaces.
+          </Text>
+        </Stack>
+        <Group justify="center">
+          <Button
+            leftSection={<IconUserCircle size={16} />}
+            variant="light"
+            color="primary"
+            loading={Boolean(switchingId)}
+            onClick={() => {
+              setRecentAccounts(getRecentAccounts());
+              setSwitcherOpen(true);
+            }}
+          >
+            Switch account
+          </Button>
+          <Button
+            leftSection={<IconLogout size={16} />}
+            variant="subtle"
+            color="gray"
+            loading={loading}
+            onClick={handleLogout}
+          >
+            Log out
+          </Button>
+        </Group>
+      </Stack>
 
       <Modal
         opened={switcherOpen}
@@ -278,7 +249,7 @@ export function NavFooter({ roles }: NavFooterProps) {
                 Recent on this device
               </Text>
               {manualRecentAccounts.map((account) => {
-                const isCurrent = account.email === currentEmail?.toLowerCase();
+                const isCurrent = account.email === currentEmail;
 
                 return (
                   <UnstyledButton
@@ -334,57 +305,53 @@ export function NavFooter({ roles }: NavFooterProps) {
                 Demo accounts
               </Text>
               {DEMO_ACCOUNTS.map((account) => {
-              const accountLabel = ROLE_LABELS[account.id] ?? account.label;
-              const isCurrent =
-                account.id === primary ||
-                account.email.toLowerCase() === currentEmail?.toLowerCase();
-              const isSwitching = switchingId === account.id;
+                const accountLabel = ROLE_LABELS[account.id] ?? account.label;
+                const isCurrent = account.email.toLowerCase() === currentEmail;
+                const isSwitching = switchingId === account.id;
 
-              return (
-                <UnstyledButton
-                  key={account.id}
-                  onClick={() => void switchAccount(account.id)}
-                  disabled={Boolean(switchingId)}
-                  style={{
-                    border: isCurrent
-                      ? "1px solid var(--ds-primary)"
-                      : "1px solid var(--ds-border-color)",
-                    borderRadius: 8,
-                    padding: "var(--ds-spacing-3)",
-                    transition:
-                      "background 150ms ease, border-color 150ms ease, transform 150ms ease",
-                    width: "100%",
-                    background: isCurrent
-                      ? "color-mix(in srgb, var(--ds-primary) 8%, var(--mantine-color-body))"
-                      : "var(--mantine-color-body)",
-                    cursor: switchingId ? "not-allowed" : "pointer",
-                    opacity: switchingId && !isSwitching ? 0.62 : 1,
-                  }}
-                >
-                  <Group justify="space-between" wrap="nowrap">
-                    <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
-                      <Avatar color="primary" radius="xl" size={40}>
-                        {accountLabel.slice(0, 1).toUpperCase()}
-                      </Avatar>
-                      <Stack gap={2} style={{ minWidth: 0 }}>
-                        <Text size="sm" fw={700} truncate>
-                          {accountLabel}
+                return (
+                  <UnstyledButton
+                    key={account.id}
+                    onClick={() => void switchDemoAccount(account.id)}
+                    disabled={Boolean(switchingId)}
+                    style={{
+                      background: isCurrent
+                        ? "color-mix(in srgb, var(--ds-primary) 8%, var(--mantine-color-body))"
+                        : "var(--mantine-color-body)",
+                      border: isCurrent
+                        ? "1px solid var(--ds-primary)"
+                        : "1px solid var(--ds-border-color)",
+                      borderRadius: 8,
+                      cursor: switchingId ? "not-allowed" : "pointer",
+                      opacity: switchingId && !isSwitching ? 0.62 : 1,
+                      padding: "var(--ds-spacing-3)",
+                      width: "100%",
+                    }}
+                  >
+                    <Group justify="space-between" wrap="nowrap">
+                      <Group gap="sm" wrap="nowrap" style={{ minWidth: 0 }}>
+                        <Avatar color="primary" radius="xl" size={40}>
+                          {accountLabel.slice(0, 1).toUpperCase()}
+                        </Avatar>
+                        <Stack gap={2} style={{ minWidth: 0 }}>
+                          <Text size="sm" fw={700} truncate>
+                            {accountLabel}
+                          </Text>
+                          <Text size="xs" c="dimmed" truncate>
+                            {ACCOUNT_DESCRIPTIONS[account.id] ?? account.email}
+                          </Text>
+                        </Stack>
+                      </Group>
+                      {isCurrent ? (
+                        <IconCheck size={20} color="var(--ds-primary)" />
+                      ) : (
+                        <Text size="xs" c="dimmed">
+                          {isSwitching ? "Signing in..." : "Switch"}
                         </Text>
-                        <Text size="xs" c="dimmed" truncate>
-                          {ACCOUNT_DESCRIPTIONS[account.id] ?? account.email}
-                        </Text>
-                      </Stack>
+                      )}
                     </Group>
-                    {isCurrent ? (
-                      <IconCheck size={20} color="var(--ds-primary)" />
-                    ) : (
-                      <Text size="xs" c="dimmed">
-                        {isSwitching ? "Signing in..." : "Switch"}
-                      </Text>
-                    )}
-                  </Group>
-                </UnstyledButton>
-              );
+                  </UnstyledButton>
+                );
               })}
             </Stack>
           )}
@@ -401,7 +368,8 @@ export function NavFooter({ roles }: NavFooterProps) {
                 color="primary"
                 radius={8}
                 leftSection={<IconPlus size={16} />}
-                onClick={() => addAccount("/login")}
+                loading={loading}
+                onClick={() => void addAccount("/login")}
               >
                 Add account
               </Button>
@@ -410,7 +378,8 @@ export function NavFooter({ roles }: NavFooterProps) {
                 color="gray"
                 radius={8}
                 leftSection={<IconLogin2 size={16} />}
-                onClick={() => addAccount("/signup")}
+                loading={loading}
+                onClick={() => void addAccount("/signup")}
               >
                 Register
               </Button>
@@ -418,6 +387,6 @@ export function NavFooter({ roles }: NavFooterProps) {
           </Box>
         </Stack>
       </Modal>
-    </>
+    </Box>
   );
 }
