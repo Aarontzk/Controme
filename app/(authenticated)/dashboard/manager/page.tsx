@@ -1,9 +1,5 @@
 import { Box, Container, Stack, Text, Title } from "@mantine/core";
-import { ManagerDashboard } from "@/components/dashboard/QcDashboards";
-import { ManagerNotifications } from "@/components/dashboard/ManagerNotifications";
-import { SystemHealthWidget } from "@/components/dashboard/SystemHealthWidget";
-import { DailyStatsStrip } from "@/components/dashboard/DailyStatsStrip";
-import { SpcPanel } from "@/components/dashboard/SpcPanel";
+import { ManagerDashboardHub } from "@/components/dashboard/ManagerDashboardHub";
 
 export default function ManagerDashboardPage() {
   return (
@@ -17,14 +13,11 @@ export default function ManagerDashboardPage() {
         >
           <Title order={1}>Manager Dashboard</Title>
           <Text c="dimmed">
-            Pass rate, trend Delta E, lot REJECT, dan warning band.
+            Select a panel: briefs &amp; alerts, SPC, analytics, daily KPI, or
+            system health.
           </Text>
         </Box>
-        <SystemHealthWidget />
-        <ManagerNotifications />
-        <DailyStatsStrip />
-        <SpcPanel />
-        <ManagerDashboard />
+        <ManagerDashboardHub />
       </Stack>
     </Container>
   );
