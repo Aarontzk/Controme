@@ -4,19 +4,27 @@ import {
   ActionIcon,
   Box,
   Chip,
+  ColorSwatch,
   Container,
   Group,
   SegmentedControl,
   Stack,
   Text,
+  Tooltip,
   Title
 } from "@mantine/core";
 import { IconSearch, IconX } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { CollectionList } from "@/components/ui/collection-list";
+import type { Header } from "@/components/ui/vtable-types";
+import type { AnyItem } from "@/lib/buildpad/types";
 import { Input } from "@/components/ui/input";
+import {
+  productReferenceHex,
+  productReferenceLabLabel
+} from "@/lib/qc/lab-swatch";
 import {
   buildProductListFilter,
   type ProductActiveFilter,
@@ -53,6 +61,34 @@ export default function AdminProductsPage() {
     setCategory("all");
     setActive("all");
   };
+
+  const renderProductCell = useCallback(
+    (item: AnyItem, header: Header) => {
+      if (header.value !== "rgb_approx") return null;
+
+      const hex = productReferenceHex(item);
+      const labLabel = productReferenceLabLabel(item);
+      if (!hex) {
+        return (
+          <Text c="dimmed" size="sm">
+            No Lab
+          </Text>
+        );
+      }
+
+      return (
+        <Group gap="xs" wrap="nowrap">
+          <Tooltip label={labLabel ?? "Reference Lab unavailable"} openDelay={300}>
+            <ColorSwatch color={hex} size={22} />
+          </Tooltip>
+          <Text ff="monospace" size="sm">
+            {hex}
+          </Text>
+        </Group>
+      );
+    },
+    []
+  );
 
   return (
     <Container size="xl" py="xl">
@@ -143,6 +179,7 @@ export default function AdminProductsPage() {
             "ref_l",
             "ref_a",
             "ref_b",
+            "rgb_approx",
             "delta_e_max",
             "warning_margin",
             "active"
@@ -153,6 +190,7 @@ export default function AdminProductsPage() {
           enableSort
           enableFilter
           enableCreate
+          renderCell={renderProductCell}
           onCreate={() => router.push("/admin/products/new")}
           onItemClick={(item) => {
             if (item.id) router.push(`/admin/products/${String(item.id)}`);
