@@ -11,6 +11,7 @@ configuration so the setup can be recreated for another environment.
 | `qc-reference-autoversion` | `products.items.update` | action | FR-03: append a row to `product_reference_versions` when reference Lab/tolerance/threshold fields change. |
 | `qc-reject-notify` | `qc_lots.items.create` | action | FR-04: append a `qc_notifications` alert/warning when a reject or warning-band lot is created. |
 | `qc-lots-validate-create` | `qc_lots.items.create` | filter | Server-side validation (defence-in-depth): rejects structurally invalid measurements (missing product, non-finite L\*a\*b\*, negative ΔE, bad status, reject without reason). |
+| `qc-lots-autoname` | `qc_lots.items.create` | filter | Auto-fills `lot_code` = `LOT-YYYYMMDD-NNN` (per-day counter, WIB) when the operator leaves it blank; keeps supplied codes. Snapshot: `docs/daas/qc-lots-autoname.js`. |
 | `qc-lots-no-update` | `qc_lots.items.update` | filter | Append-only guard: blocks UPDATE on `qc_lots`. |
 | `qc-lots-no-delete` | `qc_lots.items.delete` | filter | Append-only guard: blocks DELETE on `qc_lots`. |
 | `refversions-no-update` | `product_reference_versions.items.update` | filter | Append-only guard: blocks UPDATE on reference history. |
