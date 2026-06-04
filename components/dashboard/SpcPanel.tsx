@@ -3,13 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Badge,
+  Box,
+  Chip,
   Group,
   Paper,
   SimpleGrid,
   Stack,
   Text,
 } from "@mantine/core";
+import { IconSearch } from "@tabler/icons-react";
 
+import { Input } from "@/components/ui/input";
 import {
   buildSpc,
   capabilityLabel,
@@ -19,6 +23,17 @@ import {
   type SpcProductRef,
   type SpcResult,
 } from "@/lib/dashboard/spc";
+
+const VERDICT_RANK: Record<CapabilityVerdict, number> = {
+  "not-capable": 0,
+  marginal: 1,
+  insufficient: 2,
+  capable: 3,
+};
+
+function hasIssue(result: SpcResult): boolean {
+  return result.verdict !== "capable" || result.violations.length > 0;
+}
 
 async function fetchJson<T>(url: string): Promise<T[]> {
   const response = await fetch(url, { credentials: "include", cache: "no-store" });
@@ -160,11 +175,11 @@ function SpcCard({ result }: { result: SpcResult }) {
           </Stack>
         ) : result.verdict === "insufficient" ? (
           <Text size="xs" c="dimmed">
-            Butuh ≥ 8 lot untuk batas kendali yang bermakna.
+            Need ≥ 8 lots for meaningful control limits.
           </Text>
         ) : (
           <Text size="xs" c="dimmed">
-            Proses dalam kendali — tidak ada aturan SPC yang dilanggar.
+            In control — no SPC rule violations.
           </Text>
         )}
       </Stack>
@@ -193,6 +208,23 @@ export function SpcPanel() {
   }, [refresh]);
 
   const results = useMemo(() => buildSpc(lots, products), [lots, products]);
+  const [query, setQuery] = useState("");
+  const [problemsOnly, setProblemsOnly] = useState(false);
+
+  // Search by product name, optionally only problems, worst capability first.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return results
+      .filter((r) => (q ? r.productName.toLowerCase().includes(q) : true))
+      .filter((r) => (problemsOnly ? hasIssue(r) : true))
+      .sort((a, b) => {
+        const byVerdict = VERDICT_RANK[a.verdict] - VERDICT_RANK[b.verdict];
+        if (byVerdict !== 0) return byVerdict;
+        const byViolations = b.violations.length - a.violations.length;
+        if (byViolations !== 0) return byViolations;
+        return a.productName.localeCompare(b.productName);
+      });
+  }, [results, query, problemsOnly]);
 
   return (
     <Paper withBorder p="md" radius="md" style={panelStyle}>
@@ -200,21 +232,47 @@ export function SpcPanel() {
         <Group justify="space-between">
           <Text fw={700}>Statistical Process Control (ΔE)</Text>
           <Badge variant="outline" color="primary">
-            last {SPC_WINDOW} lots/produk
+            last {SPC_WINDOW} lots/product
           </Badge>
         </Group>
         <Text size="sm" c="dimmed">
-          Peringatan dini: deteksi proses bergeser menuju batas spec sebelum lot
-          reject terjadi. Cpu &amp; batas kendali pakai metode one-sided (ΔEmax).
+          Early warning: detect the process drifting toward the spec limit before
+          a lot is rejected. Cpu &amp; control limits use a one-sided method (ΔEmax).
         </Text>
+
+        <Group gap="xs" wrap="wrap" align="center">
+          <Box style={{ flex: 1, minWidth: 200 }}>
+            <Input
+              placeholder="Search product…"
+              value={query}
+              onChange={(value) => setQuery(String(value ?? ""))}
+              iconLeft={<IconSearch size={16} />}
+              clear
+            />
+          </Box>
+          <Chip
+            size="xs"
+            color="danger"
+            variant="outline"
+            checked={problemsOnly}
+            onChange={setProblemsOnly}
+          >
+            Issues only
+          </Chip>
+          <Badge variant="light" color="gray">
+            {filtered.length} products
+          </Badge>
+        </Group>
 
         {!loaded ? (
           <Text c="dimmed">Loading…</Text>
         ) : results.length === 0 ? (
-          <Text c="dimmed">Belum ada data ΔE untuk dianalisis.</Text>
+          <Text c="dimmed">No ΔE data to analyze yet.</Text>
+        ) : filtered.length === 0 ? (
+          <Text c="dimmed">No products match the filter.</Text>
         ) : (
           <SimpleGrid cols={{ base: 1, md: 2 }}>
-            {results.map((result) => (
+            {filtered.map((result) => (
               <SpcCard key={result.productId} result={result} />
             ))}
           </SimpleGrid>
