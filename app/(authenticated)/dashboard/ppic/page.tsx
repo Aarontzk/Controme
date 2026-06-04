@@ -13,7 +13,7 @@ export default function PpicDashboardPage() {
         >
           <Title order={1}>PPIC Dashboard</Title>
           <Text c="dimmed">
-            Clearance lot real-time untuk pending QC, QC-cleared, dan rejected.
+            Real-time clearance status: pending QC, QC-cleared, and rejected.
           </Text>
         </Box>
         <PpicDashboard />

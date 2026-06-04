@@ -99,10 +99,13 @@ function SectionCard({
   onSelect: (id: SectionId) => void;
 }) {
   const Icon = section.icon;
+  const [hovered, setHovered] = useState(false);
   return (
     <UnstyledButton
       onClick={() => onSelect(section.id)}
-      style={{ width: "100%", height: "100%" }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ width: "100%", height: "100%", cursor: "pointer" }}
     >
       <Paper
         withBorder
@@ -111,7 +114,11 @@ function SectionCard({
         style={{
           height: "100%",
           background: "var(--ds-surface-white)",
-          borderColor: "var(--ds-border-color)",
+          borderColor: hovered ? "var(--ds-primary)" : "var(--ds-border-color)",
+          boxShadow: hovered ? "var(--mantine-shadow-md)" : "none",
+          transform: hovered ? "translateY(-2px)" : "none",
+          transition:
+            "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
         }}
       >
         <Group align="flex-start" gap="md" wrap="nowrap">
