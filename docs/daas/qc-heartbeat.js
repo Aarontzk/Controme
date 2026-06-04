@@ -10,7 +10,8 @@ const lotsSvc = await services.items('qc_lots');
 
 const latest = await lotsSvc.readByQuery({ sort: ['-checked_at'], fields: ['checked_at'], limit: 1 });
 const latestAt = latest && latest[0] && latest[0].checked_at ? new Date(latest[0].checked_at).getTime() : null;
-const ageMin = latestAt ? Math.round((Date.now() - latestAt) / 60000) : null;
+// Clamp clock-skew negatives (a lot timestamped slightly ahead of "now").
+const ageMin = latestAt ? Math.max(0, Math.round((Date.now() - latestAt) / 60000)) : null;
 
 const dayAgo = new Date(Date.now() - 24 * 3600000).toISOString();
 const today = await lotsSvc.readByQuery({ filter: { checked_at: { _gte: dayAgo } }, fields: ['id'], limit: 5000 });
