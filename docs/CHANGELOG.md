@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-06-03 - Enterprise observability, audit archive & append-only QC
+
+- Added DaaS cron jobs: `qc-integrity-watch` (hourly tamper/anomaly scan),
+  `qc-heartbeat` (10-min health + data-freshness sample), `qc-audit-archive`
+  (daily off-table copy of `daas_activity` before the 90-day purge), and
+  `qc-daily-stats` (daily precomputed KPI rollup).
+- Added six append-only filter guards (UPDATE/DELETE blocked on `qc_lots`,
+  `product_reference_versions`, `audit_archive`) and a `qc-lots-validate-create`
+  server-side validation filter — defence-in-depth behind the Next proxy guard.
+- Added collections `system_health`, `audit_archive`, `qc_daily_stats` with
+  manager read perms.
+- Frontend: manager System Health widget (`system_health`), Daily QC rollup strip
+  (`qc_daily_stats`), QC briefs & alerts panel (`qc_notifications`), and migrated
+  the pass-rate + ΔE panels to precomputed stats with a live-lots fallback.
+- Docs: added `ENTERPRISE_READINESS.md` (8-component rubric scorecard) and
+  snapshotted every new cron/extension under `docs/daas/`. (PR #5, #6.)
+
 ## 2026-05-29 - DaaS runtime extensions
 
 - Added live DaaS action extensions for backend-first business logic:

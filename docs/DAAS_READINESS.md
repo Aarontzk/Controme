@@ -50,6 +50,15 @@ DaaS backend-first logic used by the current QC flow:
 Snapshots of the live extension code are stored in `docs/daas/`; operational
 notes and verification evidence are in [DAAS_EXTENSIONS.md](DAAS_EXTENSIONS.md).
 
+### Enterprise-readiness extensions, guards & cron jobs
+
+Beyond the two QC `action` hooks above, the instance also runs the validation filter,
+six append-only guards, and five scheduled jobs that back the enterprise-readiness
+rubric (immutable audit, observability, performance). Their inventory, schedules, and
+code snapshots are in [DAAS_EXTENSIONS.md](DAAS_EXTENSIONS.md), and the full rubric map
+is in [ENTERPRISE_READINESS.md](ENTERPRISE_READINESS.md). Supporting collections that
+must exist: `system_health`, `audit_archive`, `qc_daily_stats` (manager read perms).
+
 ## Required Workflow Definition
 
 The Buildpad Automation > Workflows page should show these workflow definitions:
