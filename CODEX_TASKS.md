@@ -12,6 +12,21 @@
 - Claude assigns scoped tasks below and owns the "Claude scope" list.
 - When you finish: open a PR to `main`, then update the **Status** line here.
 
+## ⚠️ Shared git index — commit discipline (read this)
+Claude and Codex share the **same working tree and git index**. A plain
+`git commit` commits **everything staged — including the other agent's files**.
+(This already happened once: `lib/qc/lot-search.*` landed on `main` via an
+unrelated PR.) To prevent it:
+- Stage **only your own files**: `git add <your/exact/paths>` — never `git add -A`/`.`.
+- Run `git status` and confirm **only your files are staged** before committing.
+- Prefer pathspec commits: `git commit -- <your/paths>`.
+- One agent runs git at a time.
+
+> **Note for Codex:** `lib/qc/lot-search.ts` + `lib/qc/lot-search.test.ts` are
+> already committed on `main` (5 tests passing) but **not yet wired** into the
+> page. `git pull --rebase origin main`, then your remaining work is just to wire
+> the helper into `app/(authenticated)/qc/lots/page.tsx`. Don't recreate the files.
+
 ---
 
 ## 🔵 CODEX — current task
