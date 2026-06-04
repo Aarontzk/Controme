@@ -37,7 +37,7 @@ export default function RootLayout({
     <html lang="en" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript />
-        <link rel="shortcut icon" href="/favicon.ico" />
+        {/* Favicon auto-injected by Next.js from app/icon.png + app/apple-icon.png */}
         <meta
           name="viewport"
           content="minimum-scale=1, initial-scale=1, width=device-width, user-scalable=no"
