@@ -6,19 +6,24 @@ import {
   Anchor,
   Badge,
   Button,
+  Chip,
   Group,
   Loader,
   Paper,
+  SegmentedControl,
   Stack,
   Text,
 } from "@mantine/core";
 
 import {
+  filterNotifications,
   isBriefNotification,
+  kindCounts,
   levelTone,
   parseBrief,
   sortNotifications,
   unreadCount,
+  type NotificationKind,
   type NotificationTone,
   type QcNotificationRow,
 } from "@/lib/dashboard/notifications";
@@ -145,6 +150,8 @@ function NotificationCard({ row, onMarkRead }: NotificationCardProps) {
 export function ManagerNotifications() {
   const [rows, setRows] = useState<QcNotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [kind, setKind] = useState<NotificationKind>("all");
+  const [unreadOnly, setUnreadOnly] = useState(false);
 
   const refresh = useCallback(() => {
     void fetchNotifications().then((next) => {
@@ -159,7 +166,11 @@ export function ManagerNotifications() {
     return () => window.clearInterval(interval);
   }, [refresh]);
 
-  const visible = useMemo(() => sortNotifications(rows), [rows]);
+  const counts = useMemo(() => kindCounts(rows), [rows]);
+  const visible = useMemo(
+    () => sortNotifications(filterNotifications(rows, kind, unreadOnly)),
+    [rows, kind, unreadOnly]
+  );
   const unread = useMemo(() => unreadCount(rows), [rows]);
 
   const markRead = useCallback(async (id: string) => {
@@ -209,12 +220,39 @@ export function ManagerNotifications() {
           </Button>
         </Group>
 
+        <Group justify="space-between" gap="xs" wrap="wrap">
+          <SegmentedControl
+            size="xs"
+            value={kind}
+            onChange={(value) => setKind(value as NotificationKind)}
+            data={[
+              { label: `All (${counts.all})`, value: "all" },
+              { label: `Brief (${counts.brief})`, value: "brief" },
+              { label: `Alert (${counts.alert})`, value: "alert" },
+              { label: `Warning (${counts.warning})`, value: "warning" },
+            ]}
+          />
+          <Chip
+            size="xs"
+            color="cta"
+            variant="outline"
+            checked={unreadOnly}
+            onChange={setUnreadOnly}
+          >
+            Unread only
+          </Chip>
+        </Group>
+
         {loading ? (
           <Group justify="center" py="md">
             <Loader size="sm" />
           </Group>
         ) : visible.length === 0 ? (
-          <Text c="dimmed">No briefs or alerts yet.</Text>
+          <Text c="dimmed">
+            {counts.all === 0
+              ? "No briefs or alerts yet."
+              : "No items match this filter."}
+          </Text>
         ) : (
           visible.map((row) => (
             <NotificationCard key={row.id} row={row} onMarkRead={markRead} />

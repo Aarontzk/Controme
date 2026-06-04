@@ -2,14 +2,65 @@ import { describe, expect, it } from "vitest";
 
 import {
   extractLinks,
+  filterNotifications,
   isBriefNotification,
   isVisibleNotification,
+  kindCounts,
   levelTone,
+  notificationKind,
   parseBrief,
   sortNotifications,
   unreadCount,
   type QcNotificationRow,
 } from "./notifications";
+
+const sampleRows: QcNotificationRow[] = [
+  { id: "1", level: "alert", status: "digest", message: "brief", read: false },
+  { id: "2", level: "alert", status: "reject", message: "reject lot", read: false },
+  { id: "3", level: "warning", status: "pass", message: "warning band", read: true },
+  { id: "4", level: "alert", status: "integrity", message: "tamper", read: false },
+  { id: "5", level: "warning", status: "void", message: "voided", read: false },
+];
+
+describe("notificationKind", () => {
+  it("buckets brief / alert / warning", () => {
+    expect(notificationKind(sampleRows[0])).toBe("brief");
+    expect(notificationKind(sampleRows[1])).toBe("alert");
+    expect(notificationKind(sampleRows[2])).toBe("warning");
+    expect(notificationKind(sampleRows[3])).toBe("alert");
+  });
+});
+
+describe("filterNotifications", () => {
+  it("hides voided rows regardless of kind", () => {
+    const all = filterNotifications(sampleRows, "all", false);
+    expect(all.map((r) => r.id)).toEqual(["1", "2", "3", "4"]);
+  });
+
+  it("filters by kind", () => {
+    expect(filterNotifications(sampleRows, "alert", false).map((r) => r.id)).toEqual([
+      "2",
+      "4",
+    ]);
+    expect(filterNotifications(sampleRows, "brief", false).map((r) => r.id)).toEqual([
+      "1",
+    ]);
+  });
+
+  it("filters unread-only", () => {
+    expect(filterNotifications(sampleRows, "all", true).map((r) => r.id)).toEqual([
+      "1",
+      "2",
+      "4",
+    ]);
+  });
+});
+
+describe("kindCounts", () => {
+  it("counts visible rows per kind", () => {
+    expect(kindCounts(sampleRows)).toEqual({ all: 4, brief: 1, alert: 2, warning: 1 });
+  });
+});
 
 const briefMessage = [
   "QC Daily Brief 2026-06-03 — 2 aksi prioritas",
