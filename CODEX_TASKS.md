@@ -39,7 +39,7 @@
 - Search narrows the list as you type; status + warning filters combine; empty
   state handled. lint + tsc + tests green. PR opened to `main`.
 
-**Status:** UNCLAIMED  _(Codex: change to `IN-PROGRESS feature/lot-search-codex`
+**Status:** IN-PROGRESS feature/lot-search-codex  _(Codex: change to `IN-PROGRESS feature/lot-search-codex`
 when you start, and `DONE PR #<n>` when merged.)_
 
 ---
