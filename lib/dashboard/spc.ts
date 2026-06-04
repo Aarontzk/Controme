@@ -176,26 +176,26 @@ export function buildSpcForProduct(
     if (beyondUcl > 0) {
       violations.push({
         type: "beyond-ucl",
-        message: `${beyondUcl} titik di luar UCL — proses tak terkendali.`,
+        message: `${beyondUcl} point(s) beyond UCL — process out of control.`,
       });
     }
     const outOfSpec = points.filter((p) => p.beyondUsl).length;
     if (outOfSpec > 0) {
       violations.push({
         type: "out-of-spec",
-        message: `${outOfSpec} titik di atas batas spec (ΔEmax) — reject.`,
+        message: `${outOfSpec} point(s) above the spec limit (ΔEmax) — reject.`,
       });
     }
     if (longestRunAbove(deltas, meanValue) >= SHIFT_RUN) {
       violations.push({
         type: "shift",
-        message: `≥${SHIFT_RUN} titik berturut di atas rata-rata — indikasi pergeseran proses.`,
+        message: `≥${SHIFT_RUN} consecutive points above the mean — process shift.`,
       });
     }
     if (longestIncreasingRun(deltas) >= DRIFT_RUN) {
       violations.push({
         type: "drift",
-        message: `≥${DRIFT_RUN} titik naik beruntun — drift menuju batas spec (peringatan dini).`,
+        message: `≥${DRIFT_RUN} rising points in a row — drift toward the spec limit (early warning).`,
       });
     }
   }
