@@ -54,6 +54,52 @@ export function unreadCount(rows: readonly QcNotificationRow[]): number {
   return rows.filter((row) => isVisibleNotification(row) && !row.read).length;
 }
 
+export type NotificationKind = "all" | "brief" | "alert" | "warning";
+
+/** Bucket a row for the panel filter: brief (CTA digest) vs alert vs warning. */
+export function notificationKind(
+  row: QcNotificationRow
+): "brief" | "alert" | "warning" | "other" {
+  if (isBriefNotification(row)) return "brief";
+  const tone = levelTone(row.level);
+  if (tone === "reject") return "alert";
+  if (tone === "warning") return "warning";
+  return "other";
+}
+
+/** Visible rows matching the selected kind and (optionally) unread-only. */
+export function filterNotifications(
+  rows: readonly QcNotificationRow[],
+  kind: NotificationKind,
+  unreadOnly: boolean
+): QcNotificationRow[] {
+  return rows.filter((row) => {
+    if (!isVisibleNotification(row)) return false;
+    if (unreadOnly && row.read) return false;
+    if (kind !== "all" && notificationKind(row) !== kind) return false;
+    return true;
+  });
+}
+
+/** Count of visible rows per kind, for filter badges. */
+export function kindCounts(
+  rows: readonly QcNotificationRow[]
+): Record<NotificationKind, number> {
+  const counts: Record<NotificationKind, number> = {
+    all: 0,
+    brief: 0,
+    alert: 0,
+    warning: 0,
+  };
+  for (const row of rows) {
+    if (!isVisibleNotification(row)) continue;
+    counts.all += 1;
+    const kind = notificationKind(row);
+    if (kind !== "other") counts[kind] += 1;
+  }
+  return counts;
+}
+
 /**
  * Newest first, but unread always ahead of read so a manager sees fresh actions
  * at the top regardless of when an old one was finally acknowledged.
