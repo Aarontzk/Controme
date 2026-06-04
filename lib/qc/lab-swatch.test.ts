@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { labToHex, productReferenceHex } from "./lab-swatch";
+import {
+  labToHex,
+  productReferenceHex,
+  productReferenceLabLabel
+} from "./lab-swatch";
 
 describe("labToHex", () => {
   it("converts CIE Lab values to hex colors", () => {
@@ -36,5 +40,21 @@ describe("productReferenceHex", () => {
 
   it("returns null when any reference channel is missing", () => {
     expect(productReferenceHex({ ref_l: 69, ref_a: 9 })).toBeNull();
+  });
+});
+
+describe("productReferenceLabLabel", () => {
+  it("formats the reference Lab triplet for UI tooltips", () => {
+    expect(
+      productReferenceLabLabel({
+        ref_l: 69.51783137071644,
+        ref_a: 9.34119933738592,
+        ref_b: 37.396043799462376
+      })
+    ).toBe("L 69.52, a 9.34, b 37.40");
+  });
+
+  it("returns null when any reference channel is missing", () => {
+    expect(productReferenceLabLabel({ ref_l: 69, ref_a: 9 })).toBeNull();
   });
 });

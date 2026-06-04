@@ -21,7 +21,10 @@ import { CollectionList } from "@/components/ui/collection-list";
 import type { Header } from "@/components/ui/vtable-types";
 import type { AnyItem } from "@/lib/buildpad/types";
 import { Input } from "@/components/ui/input";
-import { productReferenceHex } from "@/lib/qc/lab-swatch";
+import {
+  productReferenceHex,
+  productReferenceLabLabel
+} from "@/lib/qc/lab-swatch";
 import {
   buildProductListFilter,
   type ProductActiveFilter,
@@ -64,6 +67,7 @@ export default function AdminProductsPage() {
       if (header.value !== "rgb_approx") return null;
 
       const hex = productReferenceHex(item);
+      const labLabel = productReferenceLabLabel(item);
       if (!hex) {
         return (
           <Text c="dimmed" size="sm">
@@ -74,7 +78,7 @@ export default function AdminProductsPage() {
 
       return (
         <Group gap="xs" wrap="nowrap">
-          <Tooltip label={`Reference ${hex}`} openDelay={300}>
+          <Tooltip label={labLabel ?? "Reference Lab unavailable"} openDelay={300}>
             <ColorSwatch color={hex} size={22} />
           </Tooltip>
           <Text ff="monospace" size="sm">
