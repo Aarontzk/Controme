@@ -28,24 +28,24 @@ for (const r of (rows || [])) {
   if (act === 'delete') {
     deletes++;
     if (SENSITIVE.includes(col)) {
-      findings.push('DELETE pada ' + col + ' (item ' + (r.item || '?') + ', user ' + (r.performed_by || r.user_id || '?') + ', ip ' + (r.ip || '?') + ')');
+      findings.push('DELETE on ' + col + ' (item ' + (r.item || '?') + ', user ' + (r.performed_by || r.user_id || '?') + ', ip ' + (r.ip || '?') + ')');
     }
   }
   if (act === 'update' && APPEND_ONLY.includes(col)) {
-    findings.push('UPDATE pada tabel append-only ' + col + ' (item ' + (r.item || '?') + ', user ' + (r.performed_by || r.user_id || '?') + ')');
+    findings.push('UPDATE on append-only table ' + col + ' (item ' + (r.item || '?') + ', user ' + (r.performed_by || r.user_id || '?') + ')');
   }
 }
 
 if (deletes >= 25) {
-  findings.push('Lonjakan delete: ' + deletes + ' penghapusan dalam ' + WINDOW_MIN + ' menit.');
+  findings.push('Delete spike: ' + deletes + ' deletions in ' + WINDOW_MIN + ' minutes.');
 }
 
 console.log('integrity-watch: scanned ' + (rows ? rows.length : 0) + ' activity rows, ' + findings.length + ' finding(s).');
 if (findings.length === 0) { return; }
 
-const message = 'INTEGRITAS QC — ' + findings.length + ' anomali terdeteksi (' + WINDOW_MIN + ' menit terakhir):\n' +
+const message = 'QC INTEGRITY — ' + findings.length + ' anomalies detected (last ' + WINDOW_MIN + ' minutes):\n' +
   findings.slice(0, 10).map((f, i) => (i + 1) + '. ' + f).join('\n') +
-  '\n\nQC lot & reference bersifat append-only. Verifikasi siapa & kenapa. Jejak lengkap ada di audit log.';
+  '\n\nQC lots & references are append-only. Verify who & why. The full trail is in the audit log.';
 
 const notif = await services.items('qc_notifications');
 await notif.createOne({ level: 'alert', status: 'integrity', lot_id: null, product_id: null, message: message, read: false });
