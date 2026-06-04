@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Stack, Text } from "@mantine/core";
+import { Box, Text } from "@mantine/core";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, type ReactNode } from "react";
@@ -33,14 +33,20 @@ export function AuthenticatedAppShell({ children }: { children: ReactNode }) {
       loading={loading}
       sidebarWidth={300}
       sidebar={
-        <Stack
-          gap="var(--ds-spacing-3)"
-          p="var(--ds-spacing-3)"
-          style={{ minHeight: "100%" }}
+        <Box
+          style={{
+            boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
+            height: "100dvh",
+            minHeight: 0,
+            padding: "var(--ds-spacing-3)"
+          }}
         >
           <Box
             style={{
               borderBottom: "1px solid var(--ds-border-color)",
+              flexShrink: 0,
               padding: "var(--ds-spacing-2) var(--ds-spacing-1) var(--ds-spacing-4)"
             }}
           >
@@ -59,15 +65,24 @@ export function AuthenticatedAppShell({ children }: { children: ReactNode }) {
               Colour QC & Lot Traceability
             </Text>
           </Box>
-          <AppRoleNavigation
-            menuItems={menuItems}
-            currentHref={currentItem?.href}
-            onNavigate={router.push}
-            loading={loading}
-            isAdmin={userRoles.includes("admin")}
-          />
+          <Box
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              paddingTop: "var(--ds-spacing-3)"
+            }}
+          >
+            <AppRoleNavigation
+              menuItems={menuItems}
+              currentHref={currentItem?.href}
+              onNavigate={router.push}
+              loading={loading}
+              isAdmin={userRoles.includes("admin")}
+            />
+          </Box>
           <NavFooter roles={userRoles} />
-        </Stack>
+        </Box>
       }
     >
       {children}

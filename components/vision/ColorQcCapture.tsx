@@ -518,7 +518,7 @@ export function ColorQcCapture({
                     variant="outline"
                     data-testid="color-status"
                   >
-                    color {evaluation.status}
+                    {evaluation.status}
                   </Badge>
                 ) : null}
                 {evaluation?.warningFlag ? (

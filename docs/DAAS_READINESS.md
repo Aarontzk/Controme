@@ -33,7 +33,7 @@ The code writes these fields during QC capture and reference updates:
 | Collection | Required fields |
 |---|---|
 | `products` | `version` |
-| `qc_lots` | `warning_flag`, `qc_stage`, `reference_version` |
+| `qc_lots` | `warning_flag`, `qc_stage`, `reference_version`, `lot_code` |
 
 If any field is missing, `POST /api/qc/lots` or the reference update route can fail even though
 TypeScript, lint, and build pass locally.
@@ -126,19 +126,14 @@ Then add missing fields with `mcp_daas_fields`:
 - `qc_lots.warning_flag`: boolean, default `false`
 - `qc_lots.qc_stage`: enum/string constrained to `incoming` or `finish`, default `incoming`
 - `qc_lots.reference_version`: integer, default `1`
+- `qc_lots.lot_code`: string, nullable, indexed/unique if DaaS supports it for operator lot traceability
 
 After adding fields, re-run `/api/qc/schema-readiness`.
 
-### Exact MCP Payload For The Current Gap
+### Exact MCP Payload Template
 
-The latest readiness check reported these missing fields:
-
-- `products.version`
-- `qc_lots.warning_flag`
-- `qc_lots.qc_stage`
-- `qc_lots.reference_version`
-
-Run this through Claude Code / DaaS MCP when the MCP server is connected:
+Use this template only if a fresh DaaS instance reports missing fields. The current project
+readiness check is expected to pass.
 
 ```json
 {
@@ -146,6 +141,19 @@ Run this through Claude Code / DaaS MCP when the MCP server is connected:
   "arguments": {
     "action": "create",
     "data": [
+      {
+        "collection": "qc_lots",
+        "field": "lot_code",
+        "type": "string",
+        "meta": {
+          "interface": "input",
+          "readonly": true,
+          "note": "Operator-visible lot code used in dashboards and exports."
+        },
+        "schema": {
+          "is_nullable": true
+        }
+      },
       {
         "collection": "products",
         "field": "version",

@@ -24,7 +24,8 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Box,
   Button,
@@ -32,9 +33,11 @@ import {
   Group,
   Stack,
   Text,
-  Title
+  Title,
+  UnstyledButton
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { IconCheck } from "@tabler/icons-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import darkLogo from "@/assets/dark logo.png";
@@ -43,6 +46,10 @@ import heroLogin from "@/assets/hero login.png";
 import { Input } from "@/components/ui";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
 import { DEMO_ACCOUNTS, DEMO_LOGIN_ENABLED } from "@/lib/auth/demo-accounts";
+import {
+  removeRecentAccount,
+  saveRecentAccount,
+} from "@/lib/auth/recent-accounts";
 
 interface LoginValues {
   email: string;
@@ -59,6 +66,22 @@ const initialValues: LoginValues = {
   password: ""
 };
 
+function getInitialLoginValues(): LoginValues {
+  if (typeof window === "undefined") return initialValues;
+
+  const email = new URLSearchParams(window.location.search).get("email");
+  return {
+    email: email ?? "",
+    password: "",
+  };
+}
+
+function getInitialRememberMe(): boolean {
+  if (typeof window === "undefined") return false;
+
+  return new URLSearchParams(window.location.search).get("remember") === "1";
+}
+
 function validateLogin(values: LoginValues): LoginErrors {
   return {
     email: !values.email
@@ -73,10 +96,26 @@ function validateLogin(values: LoginValues): LoginErrors {
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [values, setValues] = useState<LoginValues>(initialValues);
+  const [values, setValues] = useState<LoginValues>(getInitialLoginValues);
   const [errors, setErrors] = useState<LoginErrors>({});
+  const [rememberMe, setRememberMe] = useState(getInitialRememberMe);
 
-  const handleLogin = async (loginValues: LoginValues) => {
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const message = params.get("error");
+    if (!message) return;
+
+    notifications.show({
+      title: "Authentication error",
+      message,
+      color: "red",
+    });
+  }, []);
+
+  const handleLogin = async (
+    loginValues: LoginValues,
+    options: { remember?: boolean } = {},
+  ) => {
     setLoading(true);
 
     try {
@@ -99,6 +138,11 @@ export default function LoginPage() {
         color: "green"
       });
 
+      if (options.remember) {
+        saveRecentAccount({ email: loginValues.email });
+      } else {
+        removeRecentAccount(loginValues.email);
+      }
       router.push("/");
       router.refresh();
     } catch (error) {
@@ -122,7 +166,7 @@ export default function LoginPage() {
       return;
     }
 
-    void handleLogin(values);
+    void handleLogin(values, { remember: rememberMe });
   };
 
   return (
@@ -286,6 +330,42 @@ export default function LoginPage() {
                 }
               />
 
+              <UnstyledButton
+                type="button"
+                role="checkbox"
+                aria-checked={rememberMe}
+                onClick={() => setRememberMe((current) => !current)}
+                style={{
+                  alignItems: "center",
+                  display: "flex",
+                  gap: "var(--ds-spacing-2)",
+                  width: "fit-content",
+                }}
+              >
+                <Box
+                  style={{
+                    alignItems: "center",
+                    background: rememberMe
+                      ? "var(--ds-primary)"
+                      : "var(--mantine-color-body)",
+                    border: rememberMe
+                      ? "1px solid var(--ds-primary)"
+                      : "1px solid var(--ds-border-color)",
+                    borderRadius: 4,
+                    color: "#ffffff",
+                    display: "flex",
+                    height: 18,
+                    justifyContent: "center",
+                    width: 18,
+                  }}
+                >
+                  {rememberMe ? <IconCheck size={13} stroke={3} /> : null}
+                </Box>
+                <Text size="sm" fw={600}>
+                  Remember this account
+                </Text>
+              </UnstyledButton>
+
               <Button
                 type="submit"
                 fullWidth
@@ -300,10 +380,16 @@ export default function LoginPage() {
 
           <Group justify="center" gap={6} mt="var(--ds-spacing-4)">
             <Text size="sm" c="var(--ds-text-muted)">
-              Forgot Password?
+              Need your own account?
             </Text>
-            <Text size="sm" fw={700} style={{ color: "var(--ds-primary)" }}>
-              Contact Admin
+            <Text
+              component={Link}
+              href="/signup"
+              size="sm"
+              fw={700}
+              style={{ color: "var(--ds-primary)", textDecoration: "none" }}
+            >
+              Create Account
             </Text>
           </Group>
         </Box>

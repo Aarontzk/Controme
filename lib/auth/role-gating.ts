@@ -3,6 +3,7 @@ export const APP_ROLES = [
   "qc_operator",
   "ppic",
   "manager",
+  "pending_approval",
 ] as const;
 
 export type AppRole = (typeof APP_ROLES)[number];
@@ -42,7 +43,16 @@ const ROLE_ALIASES: Record<string, AppRole> = {
   operator: "qc_operator",
   ppic: "ppic",
   manager: "manager",
+  user: "pending_approval",
+  viewer: "pending_approval",
+  pending: "pending_approval",
+  pending_approval: "pending_approval",
+  "pending approval": "pending_approval",
 };
+
+export function hasPendingApprovalRole(userRoles: readonly AppRole[]): boolean {
+  return userRoles.includes("pending_approval");
+}
 
 export const APP_MENU_ITEMS: readonly AppMenuItem[] = [
   {
@@ -140,5 +150,9 @@ export function getMenuForRoles(userRoles: readonly AppRole[]): AppMenuItem[] {
  * PPIC/manager on their dashboard, etc. Returns null when no menu is available.
  */
 export function getLandingHref(userRoles: readonly AppRole[]): string | null {
+  if (hasPendingApprovalRole(userRoles) && getMenuForRoles(userRoles).length === 0) {
+    return "/approval";
+  }
+
   return getMenuForRoles(userRoles)[0]?.href ?? null;
 }

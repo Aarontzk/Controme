@@ -17,16 +17,16 @@ import { useAppRoles } from "@/lib/auth/useAppRoles";
  */
 export default function HomePage() {
   const router = useRouter();
-  const { roles, loading } = useAppRoles();
+  const { roles, authenticated, loading } = useAppRoles();
 
   useEffect(() => {
     if (loading) return;
-    if (roles.length === 0) {
+    if (!authenticated) {
       router.replace("/login");
       return;
     }
-    router.replace(getLandingHref(roles) ?? "/login");
-  }, [loading, roles, router]);
+    router.replace(getLandingHref(roles) ?? "/approval");
+  }, [authenticated, loading, roles, router]);
 
   return (
     <Center

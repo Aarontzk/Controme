@@ -26,6 +26,7 @@ the DaaS response unchanged.
 | Method | Route | Purpose |
 |---|---|---|
 | `POST` | `/api/auth/login` | Login with email/password through Supabase Auth. |
+| `POST` | `/api/auth/signup` | Create an email/password account, provision default `pending_approval` DaaS role, and sign in. |
 | `GET` | `/api/auth/user` | Return current user profile; tries DaaS `/api/users/me`, falls back to Supabase user. |
 | `GET` | `/api/auth/callback` | Handle auth callback and session exchange. |
 | `POST` | `/api/auth/logout` | Clear Supabase session. |
@@ -38,6 +39,20 @@ the DaaS response unchanged.
   "password": "********"
 }
 ```
+
+`POST /api/auth/signup` body:
+
+```json
+{
+  "email": "new-user@example.com",
+  "password": "minimum-8-characters"
+}
+```
+
+New email/password signups are created server-side with email confirmed and a
+default `pending_approval` DaaS role. Admin/PPIC/manager/operator access must
+still be granted through DaaS RBAC, not self-service signup. Pending users land
+on `/approval` until an admin assigns an operational role.
 
 ## DaaS Collection Routes
 
@@ -57,9 +72,14 @@ also blocks direct writes to immutable collections:
   through `POST /api/qc/lots` so the server recomputes QC results from the photo.
 - `product_reference_versions`: direct writes are rejected here. Reference
   history is appended by the DaaS `qc-reference-autoversion` extension when
-  product reference fields change.
+  product reference fields change through
+  `PATCH /api/qc/products/[id]/update-reference`.
 - `qc_notifications`: clients read notification rows; creation is handled by
   the DaaS `qc-reject-notify` extension after `qc_lots` creates.
+- `products`: generic `PATCH` requests that include reference fields (`ref_l`,
+  `ref_a`, `ref_b`, tolerances, thresholds, `rgb_approx`, or `version`) are
+  rejected so reference history cannot be bypassed. Product metadata such as
+  `name`, `sku`, `category`, and `active` can still use the generic proxy.
 
 ## Metadata And Permission Routes
 
@@ -107,7 +127,7 @@ and `limit` (defaults to `500`). The response is `text/csv` with
 `Content-Disposition: attachment`.
 
 `GET /api/qc/schema-readiness` should return `ready: true` before deployment. It currently
-requires `products.version` and `qc_lots.warning_flag|qc_stage|reference_version`.
+requires `products.version` and `qc_lots.warning_flag|qc_stage|reference_version|lot_code`.
 
 `GET /api/qc/demo-readiness` should return `data.ready: true` before demo recording. It checks
 for seeded pass/reject lots, one warning lot, and both `incoming` and `finish` QC stages.
@@ -129,6 +149,24 @@ for seeded pass/reject lots, one warning lot, and both `incoming` and `finish` Q
 ```
 
 `/poc/vision` remains a browser-only experiment page for deterministic fixture testing.
+
+## Audit Log Route
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/api/activity` | Proxy to DaaS immutable audit log. Restricted to admin/manager. |
+
+`GET /api/activity` query params:
+
+| Param | Default | Notes |
+|---|---|---|
+| `limit` | `100` | Max rows returned. |
+| `offset` | `0` | Pagination offset. |
+| `sort` | `-timestamp` | DaaS sort expression. |
+| `collection` | — | Filter by collection name, e.g. `qc_lots`. |
+| `filter` | — | Raw DaaS JSON filter object. |
+
+Returns the DaaS activity log response unchanged. Each row contains: `id`, `action` (create/update/delete), `collection`, `item` (record id), `user` (user id), `timestamp`, `ip`, `user_agent`.
 
 ## Error Codes
 
