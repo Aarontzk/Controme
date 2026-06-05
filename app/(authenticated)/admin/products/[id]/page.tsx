@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Box, Container, Paper, Stack, Text, Title } from "@mantine/core";
 import { useParams, useRouter } from "next/navigation";
 
+import { BackButton } from "@/components/navigation/BackButton";
 import { ProductReferenceAssistant } from "@/components/admin/ProductReferenceAssistant";
 import { CollectionForm } from "@/components/ui/collection-form";
 import { CollectionList } from "@/components/ui/collection-list";
@@ -47,6 +48,7 @@ export default function AdminProductDetailPage() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
+        <BackButton href="/admin/products" label="Back to Products" />
         <Box
           style={{
             borderBottom: "1px solid var(--ds-border-color)",

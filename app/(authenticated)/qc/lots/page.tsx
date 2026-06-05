@@ -15,6 +15,7 @@ import { IconSearch, IconX } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { BackButton } from "@/components/navigation/BackButton";
 import { CollectionList } from "@/components/ui/collection-list";
 import { Input } from "@/components/ui/input";
 import {
@@ -46,6 +47,7 @@ export default function QcLotsPage() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
+        <BackButton />
         <Box
           style={{
             borderBottom: "1px solid var(--ds-border-color)",
