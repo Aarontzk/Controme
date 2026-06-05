@@ -12,7 +12,7 @@ import { useAppRoles } from "@/lib/auth/useAppRoles";
 /**
  * Root entry point. Sends the user straight to where they work instead of a
  * dead starter page: unauthenticated -> /login, otherwise the first page their
- * role grants (operators -> capture, PPIC/manager -> dashboard, admin -> capture).
+ * role grants (operators -> capture, PPIC/manager -> dashboard, admin -> admin dashboard).
  * This keeps the whole app reachable by clicking, no manual URL typing.
  */
 export default function HomePage() {

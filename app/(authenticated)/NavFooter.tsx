@@ -15,7 +15,6 @@ import {
 import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
-  IconLogin2,
   IconLogout,
   IconPlus,
   IconUserCircle,
@@ -164,9 +163,9 @@ export function NavFooter({ roles }: NavFooterProps) {
     }
   }
 
-  function addAccount(path: "/login" | "/signup"): void {
+  function addAccount(): void {
     setSwitcherOpen(false);
-    router.push(path);
+    router.push("/login");
   }
 
   const demoAccountsByEmail = useMemo(() => {
@@ -402,18 +401,9 @@ export function NavFooter({ roles }: NavFooterProps) {
                 color="primary"
                 radius={8}
                 leftSection={<IconPlus size={16} />}
-                onClick={() => addAccount("/login")}
+                onClick={addAccount}
               >
                 Add account
-              </Button>
-              <Button
-                variant="subtle"
-                color="gray"
-                radius={8}
-                leftSection={<IconLogin2 size={16} />}
-                onClick={() => addAccount("/signup")}
-              >
-                Register
               </Button>
             </Group>
           </Box>

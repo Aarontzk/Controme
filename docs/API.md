@@ -26,10 +26,11 @@ the DaaS response unchanged.
 | Method | Route | Purpose |
 |---|---|---|
 | `POST` | `/api/auth/login` | Login with email/password through Supabase Auth. |
-| `POST` | `/api/auth/signup` | Create an email/password account, provision default `pending_approval` DaaS role, and sign in. |
+| `POST` | `/api/auth/signup` | Disabled public signup endpoint; returns `403`. |
 | `GET` | `/api/auth/user` | Return current user profile; tries DaaS `/api/users/me`, falls back to Supabase user. |
 | `GET` | `/api/auth/callback` | Handle auth callback and session exchange. |
 | `POST` | `/api/auth/logout` | Clear Supabase session. |
+| `POST` | `/api/admin/accounts` | Admin-only employee account creation with email, password, and assigned role. |
 
 `POST /api/auth/login` body:
 
@@ -40,19 +41,22 @@ the DaaS response unchanged.
 }
 ```
 
-`POST /api/auth/signup` body:
+Public self-service signup is disabled. `POST /api/auth/signup` returns `403`;
+employee accounts are created by admins from `/dashboard/admin`.
+
+`POST /api/admin/accounts` body:
 
 ```json
 {
-  "email": "new-user@example.com",
-  "password": "minimum-8-characters"
+  "email": "employee@example.com",
+  "password": "minimum-8-characters",
+  "role": "qc_operator"
 }
 ```
 
-New email/password signups are created server-side with email confirmed and a
-default `pending_approval` DaaS role. Admin/PPIC/manager/operator access must
-still be granted through DaaS RBAC, not self-service signup. Pending users land
-on `/approval` until an admin assigns an operational role.
+Allowed roles are `qc_operator`, `ppic`, and `manager`. New employee accounts
+are created server-side with email confirmed and are provisioned into DaaS with
+the selected role. The route requires an authenticated admin session.
 
 ## DaaS Collection Routes
 
