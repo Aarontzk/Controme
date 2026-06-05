@@ -27,9 +27,15 @@ export interface TrendPoint {
 }
 
 export interface ClearanceSummary {
+  /**
+   * Lots with no pass/reject verdict. In Controme a lot is only recorded once
+   * QC has run, so this is effectively always 0 — kept for completeness.
+   */
   pending: number;
   cleared: number;
   rejected: number;
+  /** PASS lots sitting in the near-limit warning band — a PPIC watch list. */
+  warning: number;
 }
 
 function productInfo(value: QcLotAnalyticsRow["product_id"]): {
@@ -86,12 +92,14 @@ export function buildDeltaTrend(rows: QcLotAnalyticsRow[], limit = 12): TrendPoi
 export function summarizeClearance(rows: QcLotAnalyticsRow[]): ClearanceSummary {
   return rows.reduce<ClearanceSummary>(
     (summary, row) => {
-      if (row.status === "pass") summary.cleared += 1;
-      else if (row.status === "reject") summary.rejected += 1;
+      if (row.status === "pass") {
+        summary.cleared += 1;
+        if (row.warning_flag) summary.warning += 1;
+      } else if (row.status === "reject") summary.rejected += 1;
       else summary.pending += 1;
       return summary;
     },
-    { pending: 0, cleared: 0, rejected: 0 }
+    { pending: 0, cleared: 0, rejected: 0, warning: 0 }
   );
 }
 

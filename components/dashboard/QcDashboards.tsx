@@ -116,8 +116,8 @@ export function PpicDashboard() {
   return (
     <Stack gap="lg">
       <SimpleGrid cols={{ base: 1, sm: 3 }}>
-        <MetricCard label="Pending QC" value={summary.pending} tone="warning" />
         <MetricCard label="QC-cleared" value={summary.cleared} tone="pass" />
+        <MetricCard label="Warning band" value={summary.warning} tone="warning" />
         <MetricCard label="Rejected" value={summary.rejected} tone="reject" />
       </SimpleGrid>
       <Paper withBorder p="md" radius="md" style={panelStyle()}>

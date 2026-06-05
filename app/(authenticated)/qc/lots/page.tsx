@@ -85,6 +85,7 @@ export default function QcLotsPage() {
             </Box>
             <SegmentedControl
               aria-label="Status filter"
+              color="primary"
               data={[
                 { label: "All statuses", value: "all" },
                 { label: "Pass", value: "pass" },
