@@ -56,6 +56,14 @@ export function hasPendingApprovalRole(userRoles: readonly AppRole[]): boolean {
 
 export const APP_MENU_ITEMS: readonly AppMenuItem[] = [
   {
+    id: "dashboard-admin",
+    label: "Admin Dashboard",
+    href: "/dashboard/admin",
+    group: "dashboard",
+    order: 5,
+    roles: ["admin"],
+  },
+  {
     id: "qc-capture",
     label: "QC Capture",
     href: "/qc/capture",
@@ -141,6 +149,32 @@ export function getMenuForRoles(userRoles: readonly AppRole[]): AppMenuItem[] {
   return APP_MENU_ITEMS.filter((item) => requireRole(userRoles, item.roles)).sort(
     (a, b) => a.order - b.order
   );
+}
+
+export function getProtectedRouteForPath(pathname: string): AppMenuItem | null {
+  const [pathOnly] = pathname.split("?");
+  const normalizedPath =
+    pathOnly.length > 1 ? pathOnly.replace(/\/+$/, "") : pathOnly;
+
+  return (
+    [...APP_MENU_ITEMS]
+      .sort((a, b) => b.href.length - a.href.length)
+      .find(
+        (item) =>
+          normalizedPath === item.href ||
+          normalizedPath.startsWith(`${item.href}/`)
+      ) ?? null
+  );
+}
+
+export function canAccessPath(
+  userRoles: readonly AppRole[],
+  pathname: string
+): boolean {
+  const protectedRoute = getProtectedRouteForPath(pathname);
+  if (!protectedRoute) return true;
+
+  return requireRole(userRoles, protectedRoute.roles);
 }
 
 /**

@@ -17,7 +17,6 @@ import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
   IconClockHour4,
-  IconLogin2,
   IconLogout,
   IconPlus,
   IconUserCircle,
@@ -165,7 +164,7 @@ export default function ApprovalPage() {
     }
   }
 
-  async function addAccount(path: "/login" | "/signup"): Promise<void> {
+  async function addAccount(): Promise<void> {
     setLoading(true);
     try {
       await fetch("/api/auth/logout", {
@@ -173,7 +172,7 @@ export default function ApprovalPage() {
         credentials: "include",
       });
     } finally {
-      router.replace(path);
+      router.replace("/login");
       router.refresh();
     }
   }
@@ -369,19 +368,9 @@ export default function ApprovalPage() {
                 radius={8}
                 leftSection={<IconPlus size={16} />}
                 loading={loading}
-                onClick={() => void addAccount("/login")}
+                onClick={() => void addAccount()}
               >
                 Add account
-              </Button>
-              <Button
-                variant="subtle"
-                color="gray"
-                radius={8}
-                leftSection={<IconLogin2 size={16} />}
-                loading={loading}
-                onClick={() => void addAccount("/signup")}
-              >
-                Register
               </Button>
             </Group>
           </Box>

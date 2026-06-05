@@ -116,4 +116,27 @@ describe("createEmailPasswordAccount", () => {
     });
     expect(supabaseMocks.signInWithPassword).toHaveBeenCalledWith(input);
   });
+
+  it("provisions the selected employee role without signing in as the employee", async () => {
+    supabaseMocks.adminCreateUser.mockResolvedValue({ data: { user }, error: null });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ data: { id: user.id } }))
+      .mockResolvedValueOnce(Response.json({ data: { id: "role-link-1" } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      createEmailPasswordAccount({ ...input, role: "ppic" })
+    ).resolves.toMatchObject({
+      user,
+      role: "ppic",
+    });
+
+    expect(supabaseMocks.signInWithPassword).not.toHaveBeenCalled();
+    expect(JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body))).toMatchObject({
+      id: expect.any(String),
+      role_id: "cf72ea37-e568-422a-97e4-9f854d5ab997",
+      user_id: user.id,
+    });
+  });
 });

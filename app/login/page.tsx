@@ -25,12 +25,10 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   Box,
   Button,
   Divider,
-  Group,
   Stack,
   Text,
   Title,
@@ -378,20 +376,14 @@ export default function LoginPage() {
             </Stack>
           </form>
 
-          <Group justify="center" gap={6} mt="var(--ds-spacing-4)">
-            <Text size="sm" c="var(--ds-text-muted)">
-              Need your own account?
-            </Text>
-            <Text
-              component={Link}
-              href="/signup"
-              size="sm"
-              fw={700}
-              style={{ color: "var(--ds-primary)", textDecoration: "none" }}
-            >
-              Create Account
-            </Text>
-          </Group>
+          <Text
+            size="sm"
+            c="var(--ds-text-muted)"
+            ta="center"
+            mt="var(--ds-spacing-4)"
+          >
+            Need an account? Contact an administrator.
+          </Text>
         </Box>
       </Box>
     </Box>
