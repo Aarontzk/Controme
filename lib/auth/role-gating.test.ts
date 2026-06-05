@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  canAccessPath,
   getLandingHref,
   getMenuForRoles,
+  getProtectedRouteForPath,
   getRoleNames,
   requireRole,
 } from "./role-gating";
@@ -51,6 +53,10 @@ describe("role gating", () => {
     expect(requireRole(["admin"], ["manager"])).toBe(true);
   });
 
+  it("lands admins on the admin dashboard", () => {
+    expect(getLandingHref(["admin"])).toBe("/dashboard/admin");
+  });
+
   it("shows only operator capture and lot history items for QC operators", () => {
     expect(getMenuForRoles(["qc_operator"]).map((item) => item.href)).toEqual([
       "/qc/capture",
@@ -78,5 +84,26 @@ describe("role gating", () => {
 
   it("lets operational roles override pending approval", () => {
     expect(getLandingHref(["pending_approval", "qc_operator"])).toBe("/qc/capture");
+  });
+
+  it("matches nested authenticated routes to their protected menu item", () => {
+    expect(getProtectedRouteForPath("/admin/products/product-1")?.href).toBe(
+      "/admin/products"
+    );
+    expect(getProtectedRouteForPath("/qc/lots/lot-1")?.href).toBe("/qc/lots");
+  });
+
+  it("blocks roles from direct URLs outside their allowed workspace", () => {
+    expect(canAccessPath(["manager"], "/qc/capture")).toBe(false);
+    expect(canAccessPath(["qc_operator"], "/dashboard/manager")).toBe(false);
+    expect(canAccessPath(["ppic"], "/admin/products/product-1")).toBe(false);
+  });
+
+  it("allows roles through their assigned direct URLs", () => {
+    expect(canAccessPath(["admin"], "/dashboard/admin")).toBe(true);
+    expect(canAccessPath(["manager"], "/dashboard/manager")).toBe(true);
+    expect(canAccessPath(["manager"], "/qc/lots/lot-1")).toBe(true);
+    expect(canAccessPath(["qc_operator"], "/qc/capture")).toBe(true);
+    expect(canAccessPath(["admin"], "/admin/products/product-1")).toBe(true);
   });
 });

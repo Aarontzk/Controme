@@ -5,6 +5,10 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getDaasUrl } from "@/lib/api/auth-headers";
+import {
+  type EmployeeAccountRole,
+  getEmployeeAccountRole,
+} from "@/lib/auth/account-roles";
 
 const DEFAULT_SIGNUP_ROLE_ID = "9b288a57-8b99-42d2-9206-b3bb41d31e22";
 const DEFAULT_SIGNUP_ROLE_NAME = "pending_approval";
@@ -12,11 +16,12 @@ const DEFAULT_SIGNUP_ROLE_NAME = "pending_approval";
 export interface SignupAccountInput {
   email: string;
   password: string;
+  role?: EmployeeAccountRole;
 }
 
 export interface SignupAccountResult {
   user: User;
-  role: typeof DEFAULT_SIGNUP_ROLE_NAME;
+  role: EmployeeAccountRole | typeof DEFAULT_SIGNUP_ROLE_NAME;
 }
 
 function deterministicRoleLinkId(userId: string, roleId: string): string {
@@ -81,6 +86,14 @@ export async function provisionPendingApprovalUser(
   user: Pick<User, "id" | "email">,
   provider = "email"
 ): Promise<void> {
+  await provisionUserWithRole(user, DEFAULT_SIGNUP_ROLE_ID, provider);
+}
+
+async function provisionUserWithRole(
+  user: Pick<User, "id" | "email">,
+  roleId: string,
+  provider = "email"
+): Promise<void> {
   await createDaaSItem("daas_users", {
     id: user.id,
     email: user.email,
@@ -91,9 +104,9 @@ export async function provisionPendingApprovalUser(
   });
 
   await createDaaSItem("daas_user_roles", {
-    id: deterministicRoleLinkId(user.id, DEFAULT_SIGNUP_ROLE_ID),
+    id: deterministicRoleLinkId(user.id, roleId),
     user_id: user.id,
-    role_id: DEFAULT_SIGNUP_ROLE_ID,
+    role_id: roleId,
   });
 }
 
@@ -126,7 +139,10 @@ async function signInEmailPasswordUser(input: SignupAccountInput): Promise<User>
   const {
     data: { user },
     error,
-  } = await supabase.auth.signInWithPassword(input);
+  } = await supabase.auth.signInWithPassword({
+    email: input.email,
+    password: input.password,
+  });
 
   if (error) {
     throw new Error(error.message);
@@ -145,6 +161,9 @@ export async function createEmailPasswordAccount(
   const admin = createSupabaseAdmin();
   let user: User;
   let isExistingUser = false;
+  const selectedRole = input.role ? getEmployeeAccountRole(input.role) : null;
+  const roleId = selectedRole?.roleId ?? DEFAULT_SIGNUP_ROLE_ID;
+  const roleName = selectedRole?.value ?? DEFAULT_SIGNUP_ROLE_NAME;
 
   try {
     user = await createConfirmedAuthUser(admin, input);
@@ -159,7 +178,7 @@ export async function createEmailPasswordAccount(
   }
 
   try {
-    await provisionPendingApprovalUser(user);
+    await provisionUserWithRole(user, roleId);
   } catch (error) {
     if (!isExistingUser) {
       await admin.auth.admin.deleteUser(user.id);
@@ -167,12 +186,12 @@ export async function createEmailPasswordAccount(
     throw error;
   }
 
-  if (!isExistingUser) {
+  if (!isExistingUser && !selectedRole) {
     await signInEmailPasswordUser(input);
   }
 
   return {
     user,
-    role: DEFAULT_SIGNUP_ROLE_NAME,
+    role: roleName,
   };
 }
