@@ -98,8 +98,8 @@ export function NavFooter({ roles }: NavFooterProps) {
     } catch {
       // Stay on the normal login redirect when logout cannot return JSON.
     }
-    router.push(next);
-    router.refresh();
+    // Hard navigation clears all authenticated client state on the way out.
+    window.location.assign(next);
   }
 
   async function switchAccount(accountId: string): Promise<void> {
@@ -128,15 +128,14 @@ export function NavFooter({ roles }: NavFooterProps) {
         throw new Error(data?.errors?.[0]?.message ?? "Failed to switch account");
       }
 
-      notifications.show({
-        title: "Account switched",
-        message: `Signed in as ${ROLE_LABELS[account.id] ?? account.label}.`,
-        color: "green",
-      });
-
       setCurrentEmail(account.email);
       setSwitcherOpen(false);
-      router.refresh();
+      // Hard reload to "/" so the new session's role, nav gating, and every
+      // client-side fetch (useAppRoles, dashboards) re-initialise cleanly.
+      // router.refresh() only re-runs server components and leaves cached
+      // client state showing the previous account until a manual reload.
+      window.location.assign("/");
+      return;
     } catch (error) {
       notifications.show({
         title: "Switch failed",
@@ -158,8 +157,10 @@ export function NavFooter({ roles }: NavFooterProps) {
     } catch {
       // The login page can still replace the session if logout response fails.
     } finally {
-      router.push(`/login?email=${encodeURIComponent(email)}&remember=1`);
-      router.refresh();
+      // Hard navigation so no stale authenticated client state survives.
+      window.location.assign(
+        `/login?email=${encodeURIComponent(email)}&remember=1`
+      );
     }
   }
 
