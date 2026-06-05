@@ -132,6 +132,7 @@ export default function QcLotsPage() {
             "operator_id"
           ]}
           filter={lotFilter ?? undefined}
+          defaultSort={{ by: "checked_at", desc: true }}
           limit={25}
           enableSearch={false}
           enableSort
