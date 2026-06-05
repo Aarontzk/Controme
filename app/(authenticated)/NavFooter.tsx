@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Avatar,
   Box,
@@ -16,7 +15,6 @@ import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
   IconLogout,
-  IconPlus,
   IconUserCircle,
 } from "@tabler/icons-react";
 import { DEMO_ACCOUNTS, DEMO_LOGIN_ENABLED } from "@/lib/auth/demo-accounts";
@@ -44,7 +42,6 @@ interface NavFooterProps {
 }
 
 export function NavFooter({ roles }: NavFooterProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [switchingId, setSwitchingId] = useState<string | null>(null);
@@ -161,11 +158,6 @@ export function NavFooter({ roles }: NavFooterProps) {
         `/login?email=${encodeURIComponent(email)}&remember=1`
       );
     }
-  }
-
-  function addAccount(): void {
-    setSwitcherOpen(false);
-    router.push("/login");
   }
 
   const demoAccountsByEmail = useMemo(() => {
@@ -388,25 +380,6 @@ export function NavFooter({ roles }: NavFooterProps) {
               })}
             </Stack>
           )}
-
-          <Box
-            style={{
-              borderTop: "1px solid var(--ds-border-color)",
-              paddingTop: "var(--ds-spacing-3)",
-            }}
-          >
-            <Group gap="xs" grow>
-              <Button
-                variant="light"
-                color="primary"
-                radius={8}
-                leftSection={<IconPlus size={16} />}
-                onClick={addAccount}
-              >
-                Add account
-              </Button>
-            </Group>
-          </Box>
         </Stack>
       </Modal>
     </>
