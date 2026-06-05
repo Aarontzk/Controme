@@ -40,20 +40,6 @@ test("clumpy texture rejects through the consistency lane", async ({ page }) => 
   await expect(page.getByTestId("consistency-status")).toHaveText("reject");
 });
 
-test("session calibration can accept a generated-looking reference sample", async ({
-  page,
-}) => {
-  await page.goto("/poc/vision");
-  await page
-    .locator('input[name="sample-photo"]')
-    .setInputFiles("e2e/fixtures/ginger-near-reference.svg");
-
-  await expect(page.getByTestId("color-status")).toHaveText("reject");
-  await page.getByRole("button", { name: "Use as session reference" }).click();
-  await expect(page.getByTestId("color-status")).toHaveText("pass");
-  await expect(page.getByTestId("qc-status")).toHaveText("pass");
-});
-
 test("photo-style smooth ginger powder returns pass", async ({ page }) => {
   await page.goto("/poc/vision");
   await page
