@@ -14,6 +14,7 @@ frontend:
         - if [ -n "$GOOGLE_GENERATIVE_AI_API_KEY" ]; then echo "GOOGLE_GENERATIVE_AI_API_KEY=$GOOGLE_GENERATIVE_AI_API_KEY" >> .env.production; fi
         - if [ -n "$GEMINI_MODEL_ID" ]; then echo "GEMINI_MODEL_ID=$GEMINI_MODEL_ID" >> .env.production; fi
         - if [ -n "$DAAS_STATIC_TOKEN" ]; then echo "DAAS_STATIC_TOKEN=$DAAS_STATIC_TOKEN" >> .env.production; fi
+        - if [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.production; fi
         - pnpm build
   artifacts:
     baseDirectory: .next
