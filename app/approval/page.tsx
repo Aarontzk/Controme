@@ -18,7 +18,6 @@ import {
   IconCheck,
   IconClockHour4,
   IconLogout,
-  IconPlus,
   IconUserCircle,
 } from "@tabler/icons-react";
 import Image from "next/image";
@@ -160,19 +159,6 @@ export default function ApprovalPage() {
       });
     } finally {
       router.replace(`/login?email=${encodeURIComponent(email)}&remember=1`);
-      router.refresh();
-    }
-  }
-
-  async function addAccount(): Promise<void> {
-    setLoading(true);
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      router.replace("/login");
       router.refresh();
     }
   }
@@ -354,26 +340,6 @@ export default function ApprovalPage() {
               })}
             </Stack>
           )}
-
-          <Box
-            style={{
-              borderTop: "1px solid var(--ds-border-color)",
-              paddingTop: "var(--ds-spacing-3)",
-            }}
-          >
-            <Group gap="xs" grow>
-              <Button
-                variant="light"
-                color="primary"
-                radius={8}
-                leftSection={<IconPlus size={16} />}
-                loading={loading}
-                onClick={() => void addAccount()}
-              >
-                Add account
-              </Button>
-            </Group>
-          </Box>
         </Stack>
       </Modal>
     </Box>
