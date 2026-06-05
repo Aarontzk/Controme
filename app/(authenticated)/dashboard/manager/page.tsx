@@ -1,10 +1,12 @@
 import { Box, Container, Stack, Text, Title } from "@mantine/core";
+import { BackButton } from "@/components/navigation/BackButton";
 import { ManagerDashboardHub } from "@/components/dashboard/ManagerDashboardHub";
 
 export default function ManagerDashboardPage() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
+        <BackButton />
         <Box
           style={{
             borderBottom: "1px solid var(--ds-border-color)",

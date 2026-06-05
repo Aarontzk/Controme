@@ -10,10 +10,9 @@ import {
   Text,
   Title
 } from "@mantine/core";
-import { IconArrowLeft } from "@tabler/icons-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BackButton } from "@/components/navigation/BackButton";
 import { LotExportActions } from "@/components/export/LotExportActions";
 import { getAuthHeaders, getDaaSUrl } from "@/lib/api/auth-headers";
 
@@ -164,24 +163,7 @@ export default async function QcLotDetailPage({ params }: PageProps) {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
-        {/* Render Next <Link> as an element — passing it via Mantine's
-            `component={Link}` prop hands a function to a Client Component, which
-            is illegal from this Server Component and 500s the whole route. */}
-        <Link
-          href="/qc/lots"
-          style={{
-            alignItems: "center",
-            color: "var(--ds-primary)",
-            display: "inline-flex",
-            fontSize: "var(--mantine-font-size-sm)",
-            gap: 6,
-            textDecoration: "none",
-            width: "fit-content"
-          }}
-        >
-          <IconArrowLeft size={16} />
-          Back to QC Lot History
-        </Link>
+        <BackButton href="/qc/lots" label="Back to QC Lot History" />
 
         <Paper withBorder p="md" radius="md" style={panelStyle(status)}>
           <Group justify="space-between" align="flex-start">
