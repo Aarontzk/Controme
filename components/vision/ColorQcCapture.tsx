@@ -120,9 +120,6 @@ export function ColorQcCapture({
   const [measuredLab, setMeasuredLab] = useState<LabColor | null>(null);
   const [sampleAnalysis, setSampleAnalysis] =
     useState<SamplePixelAnalysis | null>(null);
-  const [sessionReference, setSessionReference] = useState<LabColor | null>(
-    null
-  );
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
@@ -142,12 +139,9 @@ export function ColorQcCapture({
     [products]
   );
 
-  const activeProduct = useMemo(() => {
-    if (!product) return undefined;
-    return sessionReference
-      ? { ...product, reference: sessionReference }
-      : product;
-  }, [product, sessionReference]);
+  // The colour reference is admin-defined per product; QC operators inspect
+  // against it and cannot override it from the capture screen.
+  const activeProduct = product;
 
   const evaluation = useMemo(
     () =>
@@ -388,7 +382,6 @@ export function ColorQcCapture({
             onChange={(value) => {
               if (typeof value === "string") {
                 setSelectedProductId(value);
-                setSessionReference(null);
               }
             }}
             allowNone={false}
@@ -588,11 +581,6 @@ export function ColorQcCapture({
                     : "awaiting capture to calculate difference"}
                 </Text>
               </Group>
-              {sessionReference ? (
-                <Badge color="primary" variant="outline">
-                  session calibrated
-                </Badge>
-              ) : null}
             </Stack>
           </Paper>
 
@@ -635,28 +623,6 @@ export function ColorQcCapture({
             style={evaluation ? statusPanelStyle(finalStatus ?? "pass") : neutralPanelStyle}
           >
             <Text size="sm">{diagnosisText}</Text>
-            {evaluation && measuredLab ? (
-              <Group gap="xs" mt="var(--ds-spacing-2)">
-                <Button
-                  size="xs"
-                  variant="light"
-                  color="primary"
-                  onClick={() => setSessionReference(measuredLab)}
-                >
-                  Use as session reference
-                </Button>
-                {sessionReference ? (
-                  <Button
-                    size="xs"
-                    variant="subtle"
-                    color="primary"
-                    onClick={() => setSessionReference(null)}
-                  >
-                    Reset reference
-                  </Button>
-                ) : null}
-              </Group>
-            ) : null}
           </Paper>
 
           <Paper
