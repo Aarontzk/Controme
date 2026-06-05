@@ -107,9 +107,12 @@ export function CameraCapture({
                 Start camera
               </Button>
             )}
-            <Button color="cta" onClick={captureFrame} disabled={!active}>
-              Grab frame
-            </Button>
+            {/* Grab frame only makes sense once the camera is live. */}
+            {active ? (
+              <Button color="cta" onClick={captureFrame}>
+                Grab frame
+              </Button>
+            ) : null}
           </Group>
         </Group>
         {error ? (

@@ -134,6 +134,7 @@ export default function AdminProductsPage() {
             </Box>
             <SegmentedControl
               aria-label="Active filter"
+              color="primary"
               data={[
                 { label: "All products", value: "all" },
                 { label: "Active", value: "active" },

@@ -207,8 +207,14 @@ export const ContentLayout: React.FC<ContentLayoutProps> = ({
                   hiddenFrom="sm"
                 />
               )}
-              {!isMobile && !sidebarOpened && (
-                <ActionIcon variant="subtle" onClick={toggleSidebar} size="sm" mr={4}>
+              {!isMobile && (
+                <ActionIcon
+                  variant="subtle"
+                  onClick={toggleSidebar}
+                  size="sm"
+                  mr={4}
+                  aria-label={sidebarOpened ? "Hide sidebar" : "Show sidebar"}
+                >
                   <IconMenu2 size={16} />
                 </ActionIcon>
               )}

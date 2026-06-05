@@ -63,6 +63,7 @@ describe("qc analytics", () => {
       pending: 0,
       cleared: 2,
       rejected: 1,
+      warning: 1,
     });
   });
 
