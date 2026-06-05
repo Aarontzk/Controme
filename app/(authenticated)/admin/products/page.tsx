@@ -17,6 +17,7 @@ import { IconSearch, IconX } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
+import { BackButton } from "@/components/navigation/BackButton";
 import { CollectionList } from "@/components/ui/collection-list";
 import type { Header } from "@/components/ui/vtable-types";
 import type { AnyItem } from "@/lib/buildpad/types";
@@ -93,6 +94,7 @@ export default function AdminProductsPage() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
+        <BackButton />
         <Box
           style={{
             borderBottom: "1px solid var(--ds-border-color)",

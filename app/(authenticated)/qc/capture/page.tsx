@@ -1,5 +1,6 @@
 import { Alert, Box, Container, Stack, Text, Title } from "@mantine/core";
 
+import { BackButton } from "@/components/navigation/BackButton";
 import { getAuthHeaders, getDaaSUrl } from "@/lib/api/auth-headers";
 import {
   mapDaasProduct,
@@ -33,6 +34,7 @@ export default async function QcCapturePage() {
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
+        <BackButton />
         <Box
           style={{
             borderBottom: "1px solid var(--ds-border-color)",
