@@ -147,6 +147,8 @@ export interface CollectionListProps {
   onFieldsChange?: (fields: string[]) => void;
   /** Callback when sort changes */
   onSortChange?: (sort: Sort | null) => void;
+  /** Initial sort applied on first load (e.g. newest first). */
+  defaultSort?: Sort;
   /** Callback when filter changes from the integrated FilterPanel */
   onFilterChange?: (filter: Record<string, unknown> | null) => void;
   /** Callback fired once permissions are resolved for the collection */
@@ -206,6 +208,7 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   onDeleteSuccess,
   onFieldsChange,
   onSortChange: onSortChangeProp,
+  defaultSort,
   onFilterChange,
   onPermissionsLoaded,
   renderCell: consumerRenderCell,
@@ -226,7 +229,9 @@ export const CollectionList: React.FC<CollectionListProps> = ({
   const [search, setSearch] = useState("");
 
   // ----- Sort state -----
-  const [sort, setSort] = useState<Sort>({ by: null, desc: false });
+  const [sort, setSort] = useState<Sort>(
+    defaultSort ?? { by: null, desc: false }
+  );
 
   // ----- Archive filter state -----
   const [archiveFilterMode, setArchiveFilterMode] = useState<ArchiveFilter>("all");
