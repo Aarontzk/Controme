@@ -56,9 +56,17 @@ test.describe("authenticated QC flow", () => {
     // No-products alert means seed/permissions are wrong — fail loudly.
     await expect(page.getByText("No products available.")).toHaveCount(0);
 
+    // Both dropdowns start on a "Select…" placeholder — the operator must
+    // consciously pick a product and stage before a lot can be saved.
+    await page.getByLabel("Product Reference").click();
+    await page.getByRole("option").first().click();
+    await page.getByLabel("QC Stage").click();
+    await page.getByRole("option", { name: "Incoming" }).click();
+
     await page.setInputFiles('input[name="sample-photo"]', SAMPLE_PHOTO);
 
-    // Save enables only once the client has measured ΔE from the photo.
+    // Save enables only once a product + stage are chosen and the client has
+    // measured ΔE from the photo.
     const saveButton = page.getByTestId("save-lot");
     await expect(saveButton).toBeEnabled({ timeout: 20_000 });
 

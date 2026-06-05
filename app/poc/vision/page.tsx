@@ -3,6 +3,7 @@
 import { Container, Stack, Text, Title } from "@mantine/core";
 
 import { ColorQcCapture } from "@/components/vision/ColorQcCapture";
+import { REFERENCE_PRODUCTS } from "@/lib/domain";
 
 export default function VisionPocPage() {
   return (
@@ -14,7 +15,7 @@ export default function VisionPocPage() {
             Browser-only color sampling from an uploaded image.
           </Text>
         </div>
-        <ColorQcCapture />
+        <ColorQcCapture defaultProductId={REFERENCE_PRODUCTS[0]?.id} />
       </Stack>
     </Container>
   );

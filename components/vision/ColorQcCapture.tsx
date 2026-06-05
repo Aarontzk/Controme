@@ -19,6 +19,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { IconRefresh } from "@tabler/icons-react";
 
 import { Input } from "@/components/ui/input";
 import { SelectDropdown } from "@/components/ui/select-dropdown";
@@ -42,6 +43,12 @@ export interface ColorQcCaptureProps {
   products?: readonly ProductReference[];
   /** When true, show "Save QC lot" — posts to /api/qc/lots for server-authoritative recompute + persistence. */
   persist?: boolean;
+  /**
+   * Pre-select a product instead of starting on the "Select…" placeholder.
+   * The real capture flow leaves this unset so the operator must choose; the
+   * vision PoC harness sets it for deterministic, selection-free assertions.
+   */
+  defaultProductId?: string;
 }
 
 interface SavedLotResult {
@@ -97,11 +104,15 @@ const neutralPanelStyle: CSSProperties = {
 export function ColorQcCapture({
   products = REFERENCE_PRODUCTS,
   persist = false,
+  defaultProductId,
 }: ColorQcCaptureProps) {
   const router = useRouter();
-  const firstProduct = products[0] ?? REFERENCE_PRODUCTS[0];
-  const [selectedProductId, setSelectedProductId] = useState(firstProduct.id);
-  const [qcStage, setQcStage] = useState<"incoming" | "finish">("incoming");
+  // Start with no selection so the operator must consciously pick the product
+  // and QC stage — both dropdowns show their "Select…" placeholder until then.
+  const [selectedProductId, setSelectedProductId] = useState<string>(
+    defaultProductId ?? ""
+  );
+  const [qcStage, setQcStage] = useState<"incoming" | "finish" | "">("");
   const [lotCode, setLotCode] = useState("");
   const [note, setNote] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -122,9 +133,8 @@ export function ColorQcCapture({
   const objectUrlRef = useRef<string | null>(null);
 
   const product = useMemo(
-    () =>
-      products.find((item) => item.id === selectedProductId) ?? firstProduct,
-    [firstProduct, products, selectedProductId]
+    () => products.find((item) => item.id === selectedProductId),
+    [products, selectedProductId]
   );
 
   const productOptions = useMemo(
@@ -132,19 +142,18 @@ export function ColorQcCapture({
     [products]
   );
 
-  const activeProduct = useMemo(
-    () =>
-      sessionReference
-        ? {
-            ...product,
-            reference: sessionReference,
-          }
-        : product,
-    [product, sessionReference]
-  );
+  const activeProduct = useMemo(() => {
+    if (!product) return undefined;
+    return sessionReference
+      ? { ...product, reference: sessionReference }
+      : product;
+  }, [product, sessionReference]);
 
   const evaluation = useMemo(
-    () => (measuredLab ? evaluateSample(activeProduct, measuredLab) : null),
+    () =>
+      measuredLab && activeProduct
+        ? evaluateSample(activeProduct, measuredLab)
+        : null,
     [activeProduct, measuredLab]
   );
 
@@ -187,6 +196,16 @@ export function ColorQcCapture({
     objectUrlRef.current = nextUrl;
     setImageUrl(nextUrl);
   }, []);
+
+  // Clear the current photo + analysis so the viewfinder goes empty and a fresh
+  // frame can be grabbed. The hidden file input is reset first — otherwise the
+  // 250ms input poll would immediately re-apply the same uploaded file.
+  const handleReset = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    handleFileChange(null);
+  }, [handleFileChange]);
 
   const handleSaveLot = useCallback(async () => {
     if (!selectedFile) {
@@ -306,14 +325,15 @@ export function ColorQcCapture({
     return () => window.clearInterval(interval);
   }, [handleFileChange, selectedFile]);
 
-  const refLab = activeProduct.reference;
-  const deltas = measuredLab
-    ? {
-        L: measuredLab.L - refLab.L,
-        a: measuredLab.a - refLab.a,
-        b: measuredLab.b - refLab.b,
-      }
-    : null;
+  const refLab = activeProduct?.reference;
+  const deltas =
+    measuredLab && refLab
+      ? {
+          L: measuredLab.L - refLab.L,
+          a: measuredLab.a - refLab.a,
+          b: measuredLab.b - refLab.b,
+        }
+      : null;
 
   const cielabTiles: ReadonlyArray<{
     key: "L" | "a" | "b";
@@ -327,6 +347,9 @@ export function ColorQcCapture({
   ];
 
   const diagnosisText = (() => {
+    if (measuredLab && !product) {
+      return "Select a product reference to evaluate this sample.";
+    }
     if (!evaluation) return "System diagnosis will appear here after analysis.";
     if (finalStatus === "reject") {
       const reason =
@@ -359,9 +382,9 @@ export function ColorQcCapture({
 
           <SelectDropdown
             label="Product Reference"
-            placeholder="Select product to inspect..."
+            placeholder="Select product…"
             choices={productOptions}
-            value={selectedProductId}
+            value={selectedProductId || null}
             onChange={(value) => {
               if (typeof value === "string") {
                 setSelectedProductId(value);
@@ -373,11 +396,12 @@ export function ColorQcCapture({
 
           <SelectDropdown
             label="QC Stage"
+            placeholder="Select stage…"
             choices={[
               { value: "incoming", text: "Incoming" },
               { value: "finish", text: "Finish" },
             ]}
-            value={qcStage}
+            value={qcStage || null}
             onChange={(value) => {
               if (value === "incoming" || value === "finish") {
                 setQcStage(value);
@@ -459,9 +483,22 @@ export function ColorQcCapture({
               pointerEvents: "none",
             }}
           />
-          <Button color="cta" fullWidth onClick={() => fileInputRef.current?.click()}>
-            Take / Upload Photo
-          </Button>
+          <Group grow gap="sm">
+            <Button color="cta" onClick={() => fileInputRef.current?.click()}>
+              {imageUrl ? "Replace photo" : "Take / Upload Photo"}
+            </Button>
+            {imageUrl ? (
+              <Button
+                variant="light"
+                color="gray"
+                leftSection={<IconRefresh size={16} />}
+                onClick={handleReset}
+                data-testid="reset-photo"
+              >
+                Reset photo
+              </Button>
+            ) : null}
+          </Group>
 
           {error ? (
             <Alert color="danger" variant="light">
@@ -530,7 +567,7 @@ export function ColorQcCapture({
               <Group gap="xs" justify="center">
                 <ColorSwatch
                   color={
-                    product.rgbApprox
+                    product?.rgbApprox
                       ? getRgbCss(product.rgbApprox)
                       : "var(--ds-border-color)"
                   }
@@ -708,7 +745,9 @@ export function ColorQcCapture({
               <Button
                 onClick={handleSaveLot}
                 loading={saving}
-                disabled={!selectedFile || !measuredLab}
+                disabled={
+                  !selectedFile || !measuredLab || !selectedProductId || !qcStage
+                }
                 data-testid="save-lot"
                 color="cta"
                 fullWidth
