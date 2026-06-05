@@ -120,19 +120,38 @@ async function fetchLot(id: string): Promise<QcLotDetail | null> {
   if (!headers.Authorization) return null;
 
   const daasUrl = getDaaSUrl();
-  // Expand operator_id so the record shows the operator's account (email/name)
-  // instead of a raw UUID.
-  const fields =
-    "*,operator_id.id,operator_id.email,operator_id.first_name,operator_id.last_name";
-  const response = await fetch(
-    `${daasUrl}/api/items/qc_lots/${id}?fields=${encodeURIComponent(fields)}`,
-    { headers, cache: "no-store" }
-  );
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error("Failed to load QC lot.");
 
-  const json = (await response.json()) as { data?: QcLotDetail };
-  return json.data ?? null;
+  // Try the operator_id expansion first so the record shows the operator's
+  // account (email/name) instead of a raw UUID. The expansion needs read access
+  // on the related users collection; if that is denied (or the session token is
+  // stale / the backend is cold), fall back to a plain fetch so the page renders
+  // with the operator UUID rather than crashing the whole route with a 500.
+  const fieldSets = [
+    "*,operator_id.id,operator_id.email,operator_id.first_name,operator_id.last_name",
+    "*"
+  ] as const;
+
+  for (const fields of fieldSets) {
+    let response: Response;
+    try {
+      response = await fetch(
+        `${daasUrl}/api/items/qc_lots/${id}?fields=${encodeURIComponent(fields)}`,
+        { headers, cache: "no-store" }
+      );
+    } catch {
+      // Network/backend unreachable — try the next (simpler) field set.
+      continue;
+    }
+    if (response.status === 404) return null;
+    if (response.ok) {
+      const json = (await response.json()) as { data?: QcLotDetail };
+      return json.data ?? null;
+    }
+    // Non-ok, non-404 (401/403/5xx): degrade to the next field set.
+  }
+
+  // Every attempt failed — render the 404 page instead of a 500.
+  return null;
 }
 
 export default async function QcLotDetailPage({ params }: PageProps) {
