@@ -17,16 +17,14 @@ import {
   IconCalendarStats,
   IconChartBar,
   IconChartLine,
-  IconHeartbeat,
 } from "@tabler/icons-react";
 
 import { ManagerDashboard } from "./QcDashboards";
 import { ManagerNotifications } from "./ManagerNotifications";
-import { SystemHealthWidget } from "./SystemHealthWidget";
 import { DailyStatsStrip } from "./DailyStatsStrip";
 import { SpcPanel } from "./SpcPanel";
 
-type SectionId = "notifications" | "spc" | "analytics" | "daily" | "health";
+type SectionId = "notifications" | "spc" | "analytics" | "daily";
 
 interface SectionDef {
   id: SectionId;
@@ -65,13 +63,6 @@ const SECTIONS: SectionDef[] = [
     icon: IconCalendarStats,
     color: "warning",
   },
-  {
-    id: "health",
-    label: "System Health",
-    description: "Heartbeat, backend latency, data freshness.",
-    icon: IconHeartbeat,
-    color: "danger",
-  },
 ];
 
 function renderSection(id: SectionId) {
@@ -84,8 +75,6 @@ function renderSection(id: SectionId) {
       return <ManagerDashboard />;
     case "daily":
       return <DailyStatsStrip />;
-    case "health":
-      return <SystemHealthWidget />;
     default:
       return null;
   }

@@ -15,8 +15,7 @@ export default function ManagerDashboardPage() {
         >
           <Title order={1}>Manager Dashboard</Title>
           <Text c="dimmed">
-            Select a panel: briefs &amp; alerts, SPC, analytics, daily KPI, or
-            system health.
+            Select a panel: briefs &amp; alerts, SPC, analytics, or daily KPI.
           </Text>
         </Box>
         <ManagerDashboardHub />

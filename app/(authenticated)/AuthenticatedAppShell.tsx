@@ -39,21 +39,21 @@ function AccessDeniedView({
         textAlign: "center",
       }}
     >
-      <Stack gap="xl" maw={760} w="100%" align="center">
+      <Stack gap="lg" maw={620} w="100%" align="center">
         <ThemeIcon
-          size={88}
+          size={64}
           radius={8}
           color="red"
           variant="light"
           aria-hidden
         >
-          <IconLockAccess size={46} />
+          <IconLockAccess size={32} />
         </ThemeIcon>
-        <Stack gap="sm" align="center">
-          <Title order={2} size="clamp(32px, 4vw, 48px)">
+        <Stack gap="xs" align="center">
+          <Title order={3} size="clamp(20px, 2.4vw, 26px)">
             You don't have access to this dashboard.
           </Title>
-          <Text c="dimmed" size="xl" maw={680}>
+          <Text c="dimmed" size="sm" maw={520}>
             Your current role cannot open {attemptedLabel}. Use the workspace
             assigned to your role, or ask an administrator to update your access.
           </Text>
@@ -63,7 +63,7 @@ function AccessDeniedView({
             <Button
               color="primary"
               radius={8}
-              size="md"
+              size="sm"
               onClick={() => onNavigate(landingHref)}
             >
               Go to my workspace
