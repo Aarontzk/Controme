@@ -113,7 +113,6 @@ export function ColorQcCapture({
     defaultProductId ?? ""
   );
   const [qcStage, setQcStage] = useState<"incoming" | "finish" | "">("");
-  const [lotCode, setLotCode] = useState("");
   const [note, setNote] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [measuredRgb, setMeasuredRgb] = useState<RgbColor | null>(null);
@@ -213,7 +212,6 @@ export function ColorQcCapture({
       body.append("photo", selectedFile);
       body.append("productId", selectedProductId);
       body.append("qcStage", qcStage);
-      body.append("lotCode", lotCode.trim());
       body.append("note", note.trim());
       const response = await fetch("/api/qc/lots", { method: "POST", body });
       // Read as text first: an infra-level failure (Lambda crash, payload/timeout)
@@ -251,7 +249,7 @@ export function ColorQcCapture({
     } finally {
       setSaving(false);
     }
-  }, [lotCode, note, qcStage, selectedFile, selectedProductId]);
+  }, [note, qcStage, selectedFile, selectedProductId]);
 
   const handleImageLoad = useCallback(
     (event: SyntheticEvent<HTMLImageElement>) => {
@@ -401,14 +399,6 @@ export function ColorQcCapture({
               }
             }}
             allowNone={false}
-          />
-
-          <Input
-            label="Lot Number (optional)"
-            placeholder="Leave blank → auto per product, e.g. GIN-0001"
-            value={lotCode}
-            onChange={(value) => setLotCode(String(value ?? ""))}
-            trim
           />
 
           <Box>
