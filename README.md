@@ -17,7 +17,7 @@ runtime extensions, and workflows.
 
 - Production: https://main.dpvw4kb04hrwl.amplifyapp.com/
 - Demo video: https://youtu.be/l95T9xWPv3s?si=ld_PncZisgFBZggA
-- Pitch deck: https://www.canva.com/design/DAHLJMyMVq4/09JpMXuUuvlMYUCp9khQCQ/edit
+- Pitch deck: https://canva.link/tiycg2cv1ije2xh
 
 ## Features
 
