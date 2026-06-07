@@ -23,6 +23,18 @@
 
 <img src="assets/hero login.png" alt="Controme Login Screen" width="100%">
 
+<div align="center">
+
+<br/>
+
+**Demo Video**
+
+<a href="https://youtu.be/l95T9xWPv3s?si=ld_PncZisgFBZggA">
+  <img src="https://img.youtube.com/vi/l95T9xWPv3s/maxresdefault.jpg" alt="Tonton Demo Video Controme" width="100%">
+</a>
+
+</div>
+
 ---
 
 ## What is Controme?
